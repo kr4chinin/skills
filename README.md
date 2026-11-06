@@ -28,6 +28,9 @@ npx skills add kr4chinin/skills --skill find-implicit-state-machines
 The audit is read-only. Each finding is labelled Confirmed, Likely or Smell,
 depending on how far it was traced through the code.
 
+Inspired by [this post](https://x.com/steveruizok/status/2116552016218710389)
+by Steve Ruiz.
+
 ## License
 
 MIT
