@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6e7781"/></marker>
+<marker id="arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#cf222e"/></marker>
+</defs>
+<rect width="1280" height="640" rx="24" fill="#ffffff"/>
+<text x="40" y="62" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" fill="#0969da">find-implicit-state-machines</text>
+<text x="40" y="104" font-size="32" font-weight="600" fill="#1f2328">Three flags make eight states. You meant four.</text>
+<rect x="40" y="140" width="540" height="460" rx="16" fill="#f6f8fa" stroke="#d0d7de"/>
+<rect x="640" y="140" width="600" height="460" rx="16" fill="#f6f8fa" stroke="#d0d7de"/>
+<path d="M596 370 L624 370" stroke="#59636e" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="76" y="186" font-size="18" font-weight="600" fill="#1f2328">In the code</text>
+<text x="76" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#59636e">isLoading · error · data</text>
+<rect x="76" y="248" width="108" height="96" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<circle cx="108.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<circle cx="130.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<circle cx="152.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<text x="130.0" y="320" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">Idle</text>
+<rect x="196" y="248" width="108" height="96" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<circle cx="228.0" cy="282" r="7" fill="#1f2328"/>
+<circle cx="250.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<circle cx="272.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<text x="250.0" y="320" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">Loading</text>
+<rect x="316" y="248" width="108" height="96" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<circle cx="348.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<circle cx="370.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<circle cx="392.0" cy="282" r="7" fill="#1f2328"/>
+<text x="370.0" y="320" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">Done</text>
+<rect x="436" y="248" width="108" height="96" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<circle cx="468.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<circle cx="490.0" cy="282" r="7" fill="#1f2328"/>
+<circle cx="512.0" cy="282" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<text x="490.0" y="320" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">Failed</text>
+<rect x="76" y="356" width="108" height="96" rx="10" fill="#ffebe9" stroke="#cf222e" stroke-width="2"/>
+<circle cx="108.0" cy="390" r="7" fill="#cf222e"/>
+<circle cx="130.0" cy="390" r="7" fill="#cf222e"/>
+<circle cx="152.0" cy="390" r="6.25" fill="none" stroke="#8c959f" stroke-width="1.5"/>
+<text x="130.0" y="422" text-anchor="middle" font-size="14" font-weight="600" fill="#a40e26">Loading</text>
+<text x="130.0" y="439" text-anchor="middle" font-size="14" font-weight="600" fill="#a40e26">+ error</text>
+<rect x="196" y="356" width="108" height="96" rx="10" fill="none" stroke="#afb8c1" stroke-dasharray="5 5"/>
+<circle cx="228.0" cy="390" r="7" fill="#afb8c1"/>
+<circle cx="250.0" cy="390" r="6.25" fill="none" stroke="#afb8c1" stroke-width="1.5"/>
+<circle cx="272.0" cy="390" r="7" fill="#afb8c1"/>
+<text x="250.0" y="428" text-anchor="middle" font-size="14" font-weight="400" fill="#afb8c1">unused</text>
+<rect x="316" y="356" width="108" height="96" rx="10" fill="none" stroke="#afb8c1" stroke-dasharray="5 5"/>
+<circle cx="348.0" cy="390" r="6.25" fill="none" stroke="#afb8c1" stroke-width="1.5"/>
+<circle cx="370.0" cy="390" r="7" fill="#afb8c1"/>
+<circle cx="392.0" cy="390" r="7" fill="#afb8c1"/>
+<text x="370.0" y="428" text-anchor="middle" font-size="14" font-weight="400" fill="#afb8c1">unused</text>
+<rect x="436" y="356" width="108" height="96" rx="10" fill="none" stroke="#afb8c1" stroke-dasharray="5 5"/>
+<circle cx="468.0" cy="390" r="7" fill="#afb8c1"/>
+<circle cx="490.0" cy="390" r="7" fill="#afb8c1"/>
+<circle cx="512.0" cy="390" r="7" fill="#afb8c1"/>
+<text x="490.0" y="428" text-anchor="middle" font-size="14" font-weight="400" fill="#afb8c1">unused</text>
+<rect x="76" y="494" width="14" height="14" rx="3" fill="#ffffff" stroke="#d0d7de"/>
+<text x="98" y="506" font-size="14" fill="#59636e">intended</text>
+<rect x="186" y="494" width="14" height="14" rx="3" fill="#ffebe9" stroke="#cf222e" stroke-width="1.5"/>
+<text x="208" y="506" font-size="14" fill="#59636e">reachable by mistake</text>
+<rect x="372" y="494" width="14" height="14" rx="3" fill="none" stroke="#afb8c1" stroke-dasharray="3 3"/>
+<text x="394" y="506" font-size="14" fill="#59636e">never reached</text>
+<text x="76" y="560" font-size="15" fill="#59636e">Nothing in the code says which of these can happen.</text>
+<text x="676" y="186" font-size="18" font-weight="600" fill="#1f2328">What the agent reports</text>
+<circle cx="684" cy="276" r="8" fill="#1f2328"/>
+<path d="M692 276 L706 276" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<rect x="708" y="250" width="100" height="52" rx="26" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<text x="758.0" y="281" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2328">Idle</text>
+<path d="M808 276 L866 276" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<text x="837" y="264" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#59636e">submit</text>
+<rect x="868" y="250" width="120" height="52" rx="26" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<text x="928.0" y="281" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2328">Loading</text>
+<path d="M988 276 L1066 276" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<text x="1027" y="264" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#59636e">response</text>
+<rect x="1068" y="250" width="120" height="52" rx="26" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<text x="1128.0" y="281" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2328">Done</text>
+<path d="M928 302 L928 408" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<text x="940" y="360" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#59636e">error</text>
+<rect x="868" y="410" width="120" height="52" rx="26" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<text x="928.0" y="441" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2328">Failed</text>
+<path d="M988 436 L1046 436" fill="none" stroke="#cf222e" stroke-width="1.75" stroke-dasharray="6 5" marker-end="url(#arrow-bad)"/>
+<text x="1017" y="424" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#a40e26">retry</text>
+<rect x="1048" y="410" width="164" height="52" rx="26" fill="#ffebe9" stroke="#cf222e" stroke-width="2"/>
+<text x="1130.0" y="441" text-anchor="middle" font-size="16" font-weight="600" fill="#a40e26">Loading + error</text>
+<text x="1212" y="496" text-anchor="end" font-size="14" fill="#a40e26">retry sets isLoading but never clears error:</text>
+<text x="1212" y="516" text-anchor="end" font-size="14" fill="#a40e26">spinner and error banner show together</text>
+</svg>
