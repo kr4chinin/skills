@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="604" viewBox="0 0 1280 604" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
 <defs>
 <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6e7781"/></marker>
 <marker id="arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#cf222e"/></marker>
 </defs>
-<rect width="1280" height="640" rx="24" fill="#ffffff"/>
-<text x="40" y="62" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" fill="#0969da">find-implicit-state-machines</text>
-<text x="40" y="104" font-size="32" font-weight="600" fill="#1f2328">Three flags make eight states. You meant four.</text>
+<rect width="1280" height="604" rx="24" fill="#ffffff"/>
+<text x="40" y="68" font-size="32" font-weight="600" fill="#1f2328">Three flags make eight states. You meant four.</text>
+<g transform="translate(0,-36)">
 <rect x="40" y="140" width="540" height="460" rx="16" fill="#f6f8fa" stroke="#d0d7de"/>
 <rect x="640" y="140" width="600" height="460" rx="16" fill="#f6f8fa" stroke="#d0d7de"/>
 <path d="M596 370 L624 370" stroke="#59636e" stroke-width="2" marker-end="url(#arrow)"/>
@@ -82,4 +82,5 @@
 <text x="1130.0" y="441" text-anchor="middle" font-size="16" font-weight="600" fill="#a40e26">Loading + error</text>
 <text x="1212" y="496" text-anchor="end" font-size="14" fill="#a40e26">retry sets isLoading but never clears error:</text>
 <text x="1212" y="516" text-anchor="end" font-size="14" fill="#a40e26">spinner and error banner show together</text>
+</g>
 </svg>
