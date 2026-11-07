@@ -112,11 +112,9 @@ states, notes and sequence regions. Pair every custom node fill with an explicit
 contrasting text colour, as in the example above. Use translucent sequence
 highlights so the theme's text stays readable on its background.
 
-When publishing to a tracker or document, verify the diagram in that destination;
-saved Mermaid source alone does not prove it is visible. If rendering is missing
-or unreadable, embed a rendered image with an opaque background and matching text
-colours, and retain the editable source. Open the uploaded image to verify labels
-and contrast before reporting completion.
+Publish diagrams as native Mermaid blocks in the tracker or document. Verify
+that they render there with readable labels and contrast in both themes before
+reporting completion; saved source alone does not prove the diagram is visible.
 
 ## Fixes
 
