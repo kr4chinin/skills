@@ -102,8 +102,21 @@ stateDiagram-v2
     Failed --> Loading: retry
     Loading --> Stuck: stale response ignored, loading never cleared
     class Stuck bad
-    classDef bad fill:#fdd,stroke:#c00
+    classDef bad fill:#fee2e2,stroke:#b91c1c,color:#111827
 ```
+
+### Diagram readability and publishing
+
+Check rendered diagrams in both light and dark themes, especially highlighted
+states, notes and sequence regions. Pair every custom node fill with an explicit
+contrasting text colour, as in the example above. Use translucent sequence
+highlights so the theme's text stays readable on its background.
+
+When publishing to a tracker or document, verify the diagram in that destination;
+saved Mermaid source alone does not prove it is visible. If rendering is missing
+or unreadable, embed a rendered image with an opaque background and matching text
+colours, and retain the editable source. Open the uploaded image to verify labels
+and contrast before reporting completion.
 
 ## Fixes
 
