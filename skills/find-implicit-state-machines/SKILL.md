@@ -36,10 +36,20 @@ meet:
 A single loading flag, or framework-managed state with nothing layered on top,
 is not a finding.
 
-On a large codebase, split it into parts of similar file count and run
-read-only subagents in parallel if available. Give each one the list above and
-ask for `path:line`, the suspected event sequence, and whether it read the
-whole path or guessed. Treat their results as leads, not findings.
+On a large codebase, delegate read-only searches only when authorized,
+compatible with the user's constraints, and supported by available tools;
+otherwise do the audit yourself. Split bounded, disjoint scopes by domain or
+lifecycle. Assign shared code an explicit owner and identify cross-scope
+handoffs so complete paths can be traced. Give each subagent its scope, relevant
+candidate heuristics and verification requirements, including applicable
+references; no recursive delegation unless the user explicitly requests it.
+
+For suspected defects, ask for compact leads: the intended invariant, state
+variables, complete event sequence with `path:line` for each step, protections
+checked, any unknown step, smallest fix, and scope limits. Return ruled-out
+candidates separately with the protections that resolved them, without inventing
+a failure or fix. The parent validates and deduplicates leads before selecting
+final findings; generate diagrams only after that selection.
 
 ## 3. Reconstruct and verify
 
@@ -73,17 +83,27 @@ reproduced unless you did it.
 
 ## 4. Report
 
+When asked to publish findings, preserve their confidence, evidence method,
+impact/severity and caveats alongside the matching native Mermaid and source
+links pinned to the audited revision. Transfer them only into tasks or documents
+the user authorized creating or updating. Verify saved source
+separately from rendering and visibility at the destination. If renderer or
+destination verification is unavailable, state that limit; do not substitute
+PNG unless requested.
+
 Write in the user's language. Order findings Confirmed, then Likely, then
 Smell; within each group, user-facing flows first.
 
 1. A one-sentence summary and a table: number, `path:line`, machine, problem,
    label.
 2. For each Confirmed or Likely finding:
-   - the state variables;
+   - a plain-language title stating what happens, then the triggering
+     condition, consequence (including what the user sees) and expected
+     behaviour; avoid jargon-only titles;
+   - compact source evidence: the state variables and failing event sequence,
+     with `path:line` for each step and any unconfirmed runtime step named;
    - a Mermaid `stateDiagram-v2` of the actual behaviour with the bad state
      marked by a `classDef`; for a timing race, a `sequenceDiagram` instead;
-   - the failing event sequence, with `path:line` for each step;
-   - what the user sees;
    - the smallest fix, and a regression test that replays the sequence.
 3. Group findings that share a cause and fix, regardless of copy count. Explain
    one representative in full and list every affected location with any
