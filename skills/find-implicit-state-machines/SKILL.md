@@ -26,16 +26,15 @@ meet:
   table;
 - mutable references or instance fields used as state;
 - flags that are set once and never reset;
+- queues, workers, leases or persisted workflows; for these backend candidates,
+  read [distributed lifecycle checks](references/distributed-lifecycles.md) to
+  trace ownership, persistence and recovery across process boundaries;
 - hand-written polling, retry, debounce or autosave loops;
 - cancel, reset or close that clears some fields but not all;
 - async results applied without checking they are still current;
 - state reset by comparing against a stored previous value;
 - mutually exclusive UI elements, each with its own flag;
 - the same flow copied into several places.
-
-For backend candidates involving queues, workers, leases or persisted workflows,
-read [distributed lifecycle checks](references/distributed-lifecycles.md) to trace
-ownership, persistence and recovery across process boundaries.
 
 A single loading flag, or framework-managed state with nothing layered on top,
 is not a finding.
