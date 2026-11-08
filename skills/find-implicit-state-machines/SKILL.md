@@ -1,13 +1,14 @@
 ---
 name: find-implicit-state-machines
-description: Find implicit state machines in a codebase (state spread across flags, status fields, timers and callbacks) and report each with a state diagram and a fix. Use when asked to find implicit state machines or audit for impossible states, stuck loading, missing resets or async races.
+description: Find implicit state machines in a codebase (state spread across flags, status fields, timers and callbacks), audit for defects, or catalog identified machines when explicitly asked for an inventory. Use when asked to find implicit state machines or audit for impossible states, stuck loading, missing resets or async races.
 ---
 
 # Find implicit state machines
 
 An implicit state machine has states and transitions that are not declared in
 one place but spread across variables, handlers, callbacks and timers. Find
-them, reconstruct them, and report the broken or fragile ones.
+and reconstruct them to audit for defects or build an explicitly requested
+inventory. Finding a machine does not mean finding a bug.
 
 Stay read-only: don't edit code or create tickets unless asked.
 
@@ -15,6 +16,17 @@ Stay read-only: don't edit code or create tickets unless asked.
 
 Use the scope the user gave. If the repository holds several apps and there is
 no hint, ask which one. Report what you included and skipped.
+
+Default to a defect audit: report the broken or fragile machines. When the user
+explicitly requests an inventory (for example, "all machines"), include a compact
+catalog of identified machines with their locations and review outcomes,
+including "no defect found" for fully traced machines without a finding. Retain
+these in the catalog even when dropped from defect findings. Continue
+investigating suspected defects and use the evidence labels below for findings.
+
+In either mode, distinguish discovery scope (where you searched), fully traced
+paths, and unreviewed candidates. State coverage gaps; search hits and file
+counts do not establish exhaustive coverage.
 
 ## 2. Find candidates
 
