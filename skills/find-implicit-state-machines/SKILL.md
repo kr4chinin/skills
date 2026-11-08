@@ -40,13 +40,16 @@ On a large codebase, delegate read-only searches only when authorized,
 compatible with the user's constraints, and supported by available tools;
 otherwise do the audit yourself. Split bounded, disjoint scopes by domain or
 lifecycle. Assign shared code an explicit owner and identify cross-scope
-handoffs so complete paths can be traced. Give each subagent the candidate
-list above; no recursive delegation unless the user explicitly requests it.
+handoffs so complete paths can be traced. Give each subagent its scope, relevant
+candidate heuristics and verification requirements, including applicable
+references; no recursive delegation unless the user explicitly requests it.
 
-Ask for compact leads: the intended invariant, state variables, complete event
-sequence with `path:line` for each step, protections checked, any unknown step,
-smallest fix, and scope limits. The parent validates and deduplicates leads
-before selecting final findings; generate diagrams only after that selection.
+For suspected defects, ask for compact leads: the intended invariant, state
+variables, complete event sequence with `path:line` for each step, protections
+checked, any unknown step, smallest fix, and scope limits. Return ruled-out
+candidates separately with the protections that resolved them, without inventing
+a failure or fix. The parent validates and deduplicates leads before selecting
+final findings; generate diagrams only after that selection.
 
 ## 3. Reconstruct and verify
 
