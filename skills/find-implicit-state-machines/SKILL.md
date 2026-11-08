@@ -30,8 +30,9 @@ counts do not establish exhaustive coverage.
 
 ## 2. Find candidates
 
-Search for units (module, component, class, service) where two or more of these
-meet:
+Prioritize units (module, component, class, service) where two or more of these
+signals meet; a concrete reachable failure can warrant tracing a candidate with
+only one signal:
 
 - several booleans describing one process;
 - a status, phase or step field assigned from many places, with no transition
@@ -45,8 +46,10 @@ meet:
 - mutually exclusive UI elements, each with its own flag;
 - the same flow copied into several places.
 
-A single loading flag, or framework-managed state with nothing layered on top,
-is not a finding.
+Signal count or complexity alone is not a defect. An existing enum, reducer or
+statechart does not rule out implicit coordination across components. A lone
+loading flag or ordinary framework-managed state without evidence of a failure
+or fragile coordination is still insufficient.
 
 On a large codebase, delegate read-only searches only when authorized,
 compatible with the user's constraints, and supported by available tools;
