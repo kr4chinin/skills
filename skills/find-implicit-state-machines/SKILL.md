@@ -33,6 +33,10 @@ meet:
 - mutually exclusive UI elements, each with its own flag;
 - the same flow copied into several places.
 
+For backend candidates involving queues, workers, leases or persisted workflows,
+read [distributed lifecycle checks](references/distributed-lifecycles.md) to trace
+ownership, persistence and recovery across process boundaries.
+
 A single loading flag, or framework-managed state with nothing layered on top,
 is not a finding.
 
@@ -131,3 +135,12 @@ Recommend the lightest change that removes the defect:
 - re-creating the unit instead of resetting its fields when its identity
   changes;
 - one shared module for copied flows.
+
+For distributed persistence defects, consider:
+
+- conditional writes/CAS guarded by current status, version or owner, checking
+  affected rows so stale completions cannot overwrite newer state;
+- transactions for related persistence changes that must commit together;
+- persisted retries or wakeups and reconciliation for interrupted work,
+  preserving idempotency and using bounded batches that cover the full eligible
+  recovery scope without starving later records.
