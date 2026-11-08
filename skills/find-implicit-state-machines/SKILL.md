@@ -39,6 +39,9 @@ only one signal:
   table;
 - mutable references or instance fields used as state;
 - flags that are set once and never reset;
+- queues, workers, leases or persisted workflows; for these backend candidates,
+  read [distributed lifecycle checks](references/distributed-lifecycles.md) to
+  trace ownership, persistence and recovery across process boundaries;
 - hand-written polling, retry, debounce or autosave loops;
 - cancel, reset or close that clears some fields but not all;
 - async results applied without checking they are still current;
@@ -192,3 +195,12 @@ Recommend the lightest change that removes the defect:
 - re-creating the unit instead of resetting its fields when its identity
   changes;
 - one shared module for copied flows.
+
+For distributed persistence defects, consider:
+
+- conditional writes/CAS guarded by current status, version or owner, checking
+  affected rows so stale completions cannot overwrite newer state;
+- transactions for related persistence changes that must commit together;
+- persisted retries or wakeups and reconciliation for interrupted work,
+  preserving idempotency and using bounded batches that cover the full eligible
+  recovery scope without starving later records.
