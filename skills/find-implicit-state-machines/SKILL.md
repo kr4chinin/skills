@@ -95,14 +95,30 @@ Smell; within each group, user-facing flows first.
 ### Diagram readability and publishing
 
 Use native Mermaid blocks, keep diagrams under about 12 states, and match the
-state names in the text. Pair custom fills with contrasting text colours and
-check the final rendered diagrams in light and dark themes. Publish only when
-explicitly requested; verify the diagrams render in the destination before
-claiming publication complete. Saved source alone does not prove visibility.
+state names in the text. For example, a stale response that leaves loading set:
 
-Read [diagram and publishing guidance](references/diagrams-and-publishing.md)
-when preparing diagrams or publishing a report; it contains the styling example
-and rendering checks. Do not replace Mermaid with PNG unless requested.
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Loading: submit
+    Loading --> Done: response
+    Loading --> Failed: error
+    Failed --> Loading: retry
+    Loading --> Stuck: stale response ignored, loading never cleared
+    class Stuck bad
+    classDef bad fill:#fee2e2,stroke:#b91c1c,color:#111827
+```
+
+Check final rendered diagrams in light and dark themes, especially highlighted
+states, notes and sequence regions. Pair every custom fill with an explicit
+contrasting text colour. Use translucent sequence highlights so the theme's text
+stays readable on its background.
+
+Publish only when explicitly requested. Preserve editable Mermaid; do not
+replace it with PNG unless requested. Verify that diagrams render in the
+destination with readable labels and contrast in both themes before claiming
+publication complete. Saved source alone does not prove visibility. If a
+rendering check is unavailable, state which check remains unverified.
 
 ## Fixes
 
