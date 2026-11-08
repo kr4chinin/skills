@@ -85,38 +85,24 @@ Smell; within each group, user-facing flows first.
    - the failing event sequence, with `path:line` for each step;
    - what the user sees;
    - the smallest fix, and a regression test that replays the sequence.
-3. Patterns seen in three or more places, with their locations.
-4. Smells, one line each.
+3. Group findings that share a cause and fix, regardless of copy count. Explain
+   one representative in full and list every affected location with any
+   meaningful differences; do not hide distinct failure sequences in a group.
+4. Smells, briefly naming the contract they rely on. Expand them or create
+   follow-up tasks only when requested.
 5. What was not covered.
-
-Keep diagrams under about 12 states and use the same state names as the text.
-For example, a request whose stale response is ignored without clearing the
-loading state:
-
-```mermaid
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> Loading: submit
-    Loading --> Done: response
-    Loading --> Failed: error
-    Failed --> Loading: retry
-    Loading --> Stuck: stale response ignored, loading never cleared
-    class Stuck bad
-    classDef bad fill:#fee2e2,stroke:#b91c1c,color:#111827
-```
 
 ### Diagram readability and publishing
 
-Check rendered diagrams in both light and dark themes, especially highlighted
-states, notes and sequence regions. Pair every custom node fill with an explicit
-contrasting text colour, as in the example above. Use translucent sequence
-highlights so the theme's text stays readable on its background.
+Use native Mermaid blocks, keep diagrams under about 12 states, and match the
+state names in the text. Pair custom fills with contrasting text colours and
+check the final rendered diagrams in light and dark themes. Publish only when
+explicitly requested; verify the diagrams render in the destination before
+claiming publication complete. Saved source alone does not prove visibility.
 
-Include diagrams as native Mermaid blocks in the report. Publish to a tracker
-or document only when the user explicitly requests it. When publishing, verify
-that the diagrams render there with readable labels and contrast in both themes
-before reporting publication complete; saved source alone does not prove the
-diagram is visible.
+Read [diagram and publishing guidance](references/diagrams-and-publishing.md)
+when preparing diagrams or publishing a report; it contains the styling example
+and rendering checks. Do not replace Mermaid with PNG unless requested.
 
 ## Fixes
 
