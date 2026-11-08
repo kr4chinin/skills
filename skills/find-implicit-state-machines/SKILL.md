@@ -36,10 +36,20 @@ meet:
 A single loading flag, or framework-managed state with nothing layered on top,
 is not a finding.
 
-On a large codebase, split it into parts of similar file count and run
-read-only subagents in parallel if available. Give each one the list above and
-ask for `path:line`, the suspected event sequence, and whether it read the
-whole path or guessed. Treat their results as leads, not findings.
+On a large codebase, delegate read-only searches only when authorized,
+compatible with the user's constraints, and supported by available tools;
+otherwise do the audit yourself. Split bounded, disjoint scopes by domain or
+lifecycle. Assign shared code an explicit owner and identify cross-scope
+handoffs so complete paths can be traced. Give each subagent its scope, relevant
+candidate heuristics and verification requirements, including applicable
+references; no recursive delegation unless the user explicitly requests it.
+
+For suspected defects, ask for compact leads: the intended invariant, state
+variables, complete event sequence with `path:line` for each step, protections
+checked, any unknown step, smallest fix, and scope limits. Return ruled-out
+candidates separately with the protections that resolved them, without inventing
+a failure or fix. The parent validates and deduplicates leads before selecting
+final findings; generate diagrams only after that selection.
 
 ## 3. Reconstruct and verify
 
