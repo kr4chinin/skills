@@ -73,9 +73,10 @@ reproduced unless you did it.
 
 ## 4. Report
 
-When asked to publish findings, carry the matching native Mermaid, confidence
-caveats and source links pinned to the audited revision into each task or
-document the user authorized creating or updating. Verify saved source
+When asked to publish findings, preserve their confidence, evidence method,
+impact/severity and caveats alongside the matching native Mermaid and source
+links pinned to the audited revision. Transfer them only into tasks or documents
+the user authorized creating or updating. Verify saved source
 separately from rendering and visibility at the destination. If renderer or
 destination verification is unavailable, state that limit; do not substitute
 PNG unless requested.
