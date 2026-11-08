@@ -98,10 +98,21 @@ Label each finding by the code trace; state any doubt about user impact in the
 text:
 
 - **Confirmed**: you traced every step of the failing sequence in the code.
+  A complete static trace is sufficient; it does not imply runtime reproduction
+  or require integration or production execution.
 - **Likely**: one step depends on runtime behaviour you could not confirm. Name
   that step.
 - **Smell**: works today, but only by convention, ordering or a guarantee
   elsewhere. Name it.
+
+Report evidence method separately: `static trace`, `isolated execution`,
+`integration execution` or `production evidence` (list all used). Report
+impact/severity separately from confidence and evidence method.
+
+Isolated execution of extracted methods or fakes does not validate SDK,
+transport or deployment assumptions. Keep a finding Likely when its failing
+sequence depends on an unverified step, and name that step. Include
+runtime/version, command and artifact details only for checks actually run.
 
 Drop candidates that turn out to be fine, and report how many you dropped. Don't claim anything was run or
 reproduced unless you did it.
@@ -120,7 +131,7 @@ Write in the user's language. Order findings Confirmed, then Likely, then
 Smell; within each group, user-facing flows first.
 
 1. A one-sentence summary and a table: number, `path:line`, machine, problem,
-   label.
+   label, evidence method, impact/severity.
 2. For each Confirmed or Likely finding:
    - a plain-language title stating what happens, then the triggering
      condition, consequence (including what the user sees) and expected
