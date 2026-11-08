@@ -1,13 +1,14 @@
 ---
 name: find-implicit-state-machines
-description: Find implicit state machines in a codebase (state spread across flags, status fields, timers and callbacks) and report each with a state diagram and a fix. Use when asked to find implicit state machines or audit for impossible states, stuck loading, missing resets or async races.
+description: Find implicit state machines in a codebase (state spread across flags, status fields, timers and callbacks), audit for defects, or catalog identified machines when explicitly asked for an inventory. Use when asked to find implicit state machines or audit for impossible states, stuck loading, missing resets or async races.
 ---
 
 # Find implicit state machines
 
 An implicit state machine has states and transitions that are not declared in
 one place but spread across variables, handlers, callbacks and timers. Find
-them, reconstruct them, and report the broken or fragile ones.
+and reconstruct them to audit for defects or build an explicitly requested
+inventory. Finding a machine does not mean finding a bug.
 
 Stay read-only: don't edit code or create tickets unless asked.
 
@@ -16,10 +17,22 @@ Stay read-only: don't edit code or create tickets unless asked.
 Use the scope the user gave. If the repository holds several apps and there is
 no hint, ask which one. Report what you included and skipped.
 
+Default to a defect audit: report the broken or fragile machines. When the user
+explicitly requests an inventory (for example, "catalog all machines, including
+ones with no defect"), include a compact catalog with locations and review outcomes,
+including "no defect found" for fully traced machines without a finding. Retain
+these in the catalog even when dropped from defect findings. Continue
+investigating suspected defects and use the evidence labels below for findings.
+
+In either mode, distinguish discovery scope (where you searched), fully traced
+paths, and unreviewed candidates. State coverage gaps; search hits and file
+counts do not establish exhaustive coverage.
+
 ## 2. Find candidates
 
-Search for units (module, component, class, service) where two or more of these
-meet:
+Prioritize units (module, component, class, service) where two or more of these
+signals meet; a concrete reachable failure can warrant tracing a candidate with
+only one signal:
 
 - several booleans describing one process;
 - a status, phase or step field assigned from many places, with no transition
@@ -33,8 +46,10 @@ meet:
 - mutually exclusive UI elements, each with its own flag;
 - the same flow copied into several places.
 
-A single loading flag, or framework-managed state with nothing layered on top,
-is not a finding.
+Signal count or complexity alone is not a defect. An existing enum, reducer or
+statechart does not rule out implicit coordination across components. A lone
+loading flag or ordinary framework-managed state without evidence of a failure
+or fragile coordination is still insufficient.
 
 On a large codebase, delegate read-only searches only when authorized,
 compatible with the user's constraints, and supported by available tools;
@@ -53,9 +68,10 @@ final findings; generate diagrams only after that selection.
 
 ## 3. Reconstruct and verify
 
-For each candidate, read the whole code path and write down the state
-variables, the intended states, the reachable combinations, the events (user
-actions, responses, errors, timers, teardown) and the transitions. Check for:
+For each candidate, state the intended invariant and trace a concrete, reachable
+event sequence that would violate it. Read the whole code path and write down
+the state variables, intended states, reachable combinations, events (user
+actions, responses, errors, timers, teardown) and transitions. Check for:
 
 - an impossible combination that is reachable;
 - a state with no way out;
@@ -65,18 +81,41 @@ actions, responses, errors, timers, teardown) and the transitions. Check for:
 - a loop with no terminal or error state;
 - copies that have drifted apart.
 
-Before confirming, look for what makes the sequence impossible: a remount
-(component keys, route changes), disabled or hidden UI, guards in callers, and
-framework guarantees.
+Actively try to disprove the sequence: check callers and their guards, remounts
+(component keys, route changes), disabled or hidden UI, worker/consumer
+registration, locks, transactions and concurrency tokens. Trace recovery paths
+and check whether degradation or manual recovery is intentionally accepted
+before treating it as a defect. Verify framework assumptions against installed
+versions and relevant source or official documentation, following the
+repository's documentation policy.
+
+If uncertainty remains, choose the smallest meaningful execution within the
+audit's authorized scope, preferring local isolated checks. This skill grants
+no access to production or other shared systems. If a check is unavailable or
+unauthorized, keep the finding Likely and name the unresolved step. A complete
+static trace needs no runtime reproduction. Distinguish tests read from tests
+run, and state what an executed check actually exercises: a source-method call
+or fake alone is not broker, database or SDK proof.
 
 Label each finding by the code trace; state any doubt about user impact in the
 text:
 
 - **Confirmed**: you traced every step of the failing sequence in the code.
+  A complete static trace is sufficient; it does not imply runtime reproduction
+  or require integration or production execution.
 - **Likely**: one step depends on runtime behaviour you could not confirm. Name
   that step.
 - **Smell**: works today, but only by convention, ordering or a guarantee
   elsewhere. Name it.
+
+Report evidence method separately: `static trace`, `isolated execution`,
+`integration execution` or `production evidence` (list all used). Report
+impact/severity separately from confidence and evidence method.
+
+Isolated execution of extracted methods or fakes does not validate SDK,
+transport or deployment assumptions. Keep a finding Likely when its failing
+sequence depends on an unverified step, and name that step. Include
+runtime/version, command and artifact details only for checks actually run.
 
 Drop candidates that turn out to be fine, and report how many you dropped. Don't claim anything was run or
 reproduced unless you did it.
@@ -95,7 +134,7 @@ Write in the user's language. Order findings Confirmed, then Likely, then
 Smell; within each group, user-facing flows first.
 
 1. A one-sentence summary and a table: number, `path:line`, machine, problem,
-   label.
+   label, evidence method, impact/severity.
 2. For each Confirmed or Likely finding:
    - a plain-language title stating what happens, then the triggering
      condition, consequence (including what the user sees) and expected
