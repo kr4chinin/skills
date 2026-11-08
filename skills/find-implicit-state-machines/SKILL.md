@@ -53,9 +53,10 @@ final findings; generate diagrams only after that selection.
 
 ## 3. Reconstruct and verify
 
-For each candidate, read the whole code path and write down the state
-variables, the intended states, the reachable combinations, the events (user
-actions, responses, errors, timers, teardown) and the transitions. Check for:
+For each candidate, state the intended invariant and trace a concrete, reachable
+event sequence that would violate it. Read the whole code path and write down
+the state variables, intended states, reachable combinations, events (user
+actions, responses, errors, timers, teardown) and transitions. Check for:
 
 - an impossible combination that is reachable;
 - a state with no way out;
@@ -65,9 +66,21 @@ actions, responses, errors, timers, teardown) and the transitions. Check for:
 - a loop with no terminal or error state;
 - copies that have drifted apart.
 
-Before confirming, look for what makes the sequence impossible: a remount
-(component keys, route changes), disabled or hidden UI, guards in callers, and
-framework guarantees.
+Actively try to disprove the sequence: check callers and their guards, remounts
+(component keys, route changes), disabled or hidden UI, worker/consumer
+registration, locks, transactions and concurrency tokens. Trace recovery paths
+and check whether degradation or manual recovery is intentionally accepted
+before treating it as a defect. Verify framework assumptions against installed
+versions and relevant source or official documentation, following the
+repository's documentation policy.
+
+If uncertainty remains, choose the smallest meaningful execution within the
+audit's authorized scope, preferring local isolated checks. This skill grants
+no access to production or other shared systems. If a check is unavailable or
+unauthorized, keep the finding Likely and name the unresolved step. A complete
+static trace needs no runtime reproduction. Distinguish tests read from tests
+run, and state what an executed check actually exercises: a source-method call
+or fake alone is not broker, database or SDK proof.
 
 Label each finding by the code trace; state any doubt about user impact in the
 text:
