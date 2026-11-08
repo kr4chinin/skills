@@ -18,8 +18,8 @@ Use the scope the user gave. If the repository holds several apps and there is
 no hint, ask which one. Report what you included and skipped.
 
 Default to a defect audit: report the broken or fragile machines. When the user
-explicitly requests an inventory (for example, "all machines"), include a compact
-catalog of identified machines with their locations and review outcomes,
+explicitly requests an inventory (for example, "catalog all machines, including
+ones with no defect"), include a compact catalog with locations and review outcomes,
 including "no defect found" for fully traced machines without a finding. Retain
 these in the catalog even when dropped from defect findings. Continue
 investigating suspected defects and use the evidence labels below for findings.
