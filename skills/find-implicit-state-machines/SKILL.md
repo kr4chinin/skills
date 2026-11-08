@@ -73,6 +73,13 @@ reproduced unless you did it.
 
 ## 4. Report
 
+When asked to publish findings, carry the matching native Mermaid, confidence
+caveats and source links pinned to the audited revision into each task or
+document the user authorized creating or updating. Verify saved source
+separately from rendering and visibility at the destination. If renderer or
+destination verification is unavailable, state that limit; do not substitute
+PNG unless requested.
+
 Write in the user's language. Order findings Confirmed, then Likely, then
 Smell; within each group, user-facing flows first.
 
@@ -115,14 +122,10 @@ contrasting text colour, as in the example above. Use translucent sequence
 highlights so the theme's text stays readable on its background.
 
 Include diagrams as native Mermaid blocks in the report. Publish to a tracker
-or document only when the user explicitly requests it. When publishing, carry
-the matching native Mermaid, confidence caveats and source links pinned to the
-audited revision into each task or document the user authorized creating or
-updating. Verify saved source separately from
-rendering and visibility at the destination; check readable labels and contrast
-in both themes before reporting publication complete. If renderer or destination
-verification is unavailable, state that limit; saved source alone does not prove
-the diagram is visible. Do not substitute PNG unless requested.
+or document only when the user explicitly requests it. When publishing, verify
+that the diagrams render there with readable labels and contrast in both themes
+before reporting publication complete; saved source alone does not prove the
+diagram is visible.
 
 ## Fixes
 
