@@ -117,7 +117,8 @@ highlights so the theme's text stays readable on its background.
 Include diagrams as native Mermaid blocks in the report. Publish to a tracker
 or document only when the user explicitly requests it. When publishing, carry
 the matching native Mermaid, confidence caveats and source links pinned to the
-audited revision into each relevant task. Verify saved source separately from
+audited revision into each task or document the user authorized creating or
+updating. Verify saved source separately from
 rendering and visibility at the destination; check readable labels and contrast
 in both themes before reporting publication complete. If renderer or destination
 verification is unavailable, state that limit; saved source alone does not prove
