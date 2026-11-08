@@ -64,10 +64,13 @@ before treating it as a defect. Verify framework assumptions against installed
 versions and relevant source or official documentation, following the
 repository's documentation policy.
 
-If uncertainty remains, choose the smallest meaningful execution that can
-resolve it; a complete static trace needs no runtime reproduction. Distinguish
-tests read from tests run, and state what an executed check actually exercises:
-a source-method call or fake alone is not broker, database or SDK proof.
+If uncertainty remains, choose the smallest meaningful execution within the
+audit's authorized scope, preferring local isolated checks. This skill grants
+no access to production or other shared systems. If a check is unavailable or
+unauthorized, keep the finding Likely and name the unresolved step. A complete
+static trace needs no runtime reproduction. Distinguish tests read from tests
+run, and state what an executed check actually exercises: a source-method call
+or fake alone is not broker, database or SDK proof.
 
 Label each finding by the code trace; state any doubt about user impact in the
 text:
