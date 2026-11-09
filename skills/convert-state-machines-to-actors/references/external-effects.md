@@ -1,65 +1,52 @@
 # External effects
 
-Read this when a transition calls another system. The skill's step 4 decides
-whether the call needs an awaiting state, an outbox or both; this file covers
-how each stays correct.
+Read when a transition calls another system.
 
 ## Awaiting state (`pending`)
 
-- Dispatch and recording are two actor events in two transactions. No
-  transaction or lock stays open across the external call.
-- Store the request parameters with the request id. A resend reuses the key
+- Dispatch and recording are two actor events in two transactions; nothing
+  stays open across the call.
+- Store the request parameters with the request id; a resend reuses the key
   only with the same parameters.
-- A crash before the call and a crash after it leave the same `pending` row.
-  Treat both as unknown until reconciled.
+- A crash before or after the call leaves the same `pending` row: unknown
+  until reconciled.
 - The reconciler ships in the same change and owns stale `pending` rows. It
-  first asks the receiver about the request id, where the receiver supports a
-  lookup. It resends only when the receiver documents and stores that key
-  (check its documentation; an id minted only in this service is not such a
-  key) and the user allowed automatic resend for this call. Everything else
-  stays `uncertain` for a person.
+  asks the receiver about the request id where it can, and resends only when
+  the receiver documents and stores that key (an id minted only here is not
+  one) and the user allowed automatic resend. Otherwise the row stays
+  `uncertain` for a person.
 
 ## Outbox
 
-- Only the relay sends. The old direct call is removed in the same cutover
-  that enables the relay; two senders deliver the effect twice.
-- Key each effect by the entity, the event key and a stable per-transition
-  effect id or position. Two entities can share an event key, and one event
-  can emit the same named effect several times with different parameters, so
-  neither the event key nor the name alone is unique.
-- Claim in a short transaction: take rows with `SELECT ... FOR UPDATE SKIP
-  LOCKED`, stamp the claim owner and an expiry, commit. Send outside any
-  transaction, then mark sent on the condition that the claim is still held.
-  Expired claims are claimable again, which is how a crashed relay's rows
-  move on.
-- When one entity's effects must stay in order, give them a per-entity
-  sequence assigned in the actor's transaction and make only the earliest
-  unsent effect of each entity claimable. `SKIP LOCKED` alone lets another
-  relay skip an earlier row and send a later one first. A relay whose claim
-  expired mid-send can still deliver an earlier effect after its replacement
-  sent a later one, so order holds only at a receiver that deduplicates by
-  effect key or drops a sequence older than the last it saw; otherwise do not
-  promise order. When order does not matter, leave the sequence out.
-- Delivery is at least once. A receiver with no deduplication key (email,
-  SMS, many webhooks) eventually gets a duplicate after a crash between send
-  and mark-sent. Make the effect safe to repeat; otherwise an expired claim
-  on it may already have been sent, so it goes to the reconciler instead of
-  back to the queue, and the resend rules of the awaiting state apply.
+- Only the relay sends. The direct call goes in the same cutover, or the
+  effect goes out twice.
+- Key each effect by entity, event key and a stable per-transition effect id
+  or position: entities can share an event key, and one event can emit the
+  same effect twice.
+- Claim in a short transaction (`SELECT ... FOR UPDATE SKIP LOCKED`, stamp
+  owner and expiry, commit), send outside any transaction, and mark sent only
+  while the claim is held. Expired claims become claimable again.
+- For per-entity order, assign a sequence in the actor's transaction and make
+  only each entity's earliest unsent effect claimable. A relay whose claim
+  expired mid-send can still deliver late, so promise order only to a
+  receiver that deduplicates by effect key or drops stale sequences.
+- Delivery is at least once. If the receiver cannot deduplicate (email, SMS,
+  many webhooks), make the effect safe to repeat; otherwise an expired claim
+  on it goes to the reconciler, not back to the queue, under the resend rules
+  above.
 
 ## Leases
 
-- A worker holding a lease carries a fencing token that grows with every
-  takeover. The token and the lease's expiry are both part of the write's
-  guard, checked in the same atomic write; until a takeover the token still
-  matches after expiry, and a read-then-compare in the worker leaves a gap.
-- Judge expiry by the database clock, not the worker's clock.
-- Fencing protects the row, not an effect the stale worker already sent. Pass
-  the token or request id to the receiver where it accepts one.
+- A worker carries a fencing token that grows on every takeover. The write's
+  guard checks the token and the lease expiry, by the database clock, in the
+  same atomic write; until a takeover the token alone still matches after
+  expiry.
+- Fencing protects the row, not an effect already sent. Pass the token or
+  request id to the receiver where it accepts one.
 
 ## Late results
 
-- Accept a result only while the state still awaits that request id. An
+- Accept a result only while the state still awaits that request id; an
   unrelated change to the entity does not invalidate it.
-- A rejected result whose effect already happened (money moved, the order
-  since cancelled) goes to compensation or manual review, not only to a log
-  line.
+- A rejected result whose effect already happened (money moved) goes to
+  compensation or manual review, not only to a log line.

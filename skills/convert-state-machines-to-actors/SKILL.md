@@ -5,239 +5,169 @@ description: Convert a database-backed implicit state machine to an actor, the o
 
 # Convert implicit state machines to actors
 
-An actor here is the one owner of a process's persisted state: every writer
-sends it an event instead of writing. The actor is a function rebuilt for each
-event. No mailbox, timer or statechart instance stays in memory, because the
-database is the authority, and that is what makes the actor hold across
-replicas and restarts.
+An actor is the one owner of a process's persisted state: writers send it
+events instead of writing. It is a function run per event with nothing kept
+in memory; the database is the authority, so the actor holds across replicas
+and restarts.
 
 Input: findings from `find-implicit-state-machines`, a `path:line` or a
-ticket. Keep the finder's label. Convert **Confirmed** findings; for
-**Likely**, step 2 supplies the missing confirmation; convert a **Smell** only
-when the user asks. For several findings, start with
+ticket. Keep the finder's label: convert **Confirmed**; for **Likely**, step 2
+confirms; a **Smell** only on request. For several findings, see
 [Several machines](#several-machines).
 
-A single conditional write (`UPDATE ... WHERE status = :expected`, checking the
-affected row count) is often the whole fix. Convert to an actor when one
-conditional write cannot cover the writers, or when the user asks for one
-owner; otherwise recommend the conditional write and stop. If the finding does
-not already list the writers, decide this after step 3.
+One conditional write (`UPDATE ... WHERE status = :expected`, checking the
+row count) is often the whole fix. Build an actor only when one conditional
+write cannot cover the writers or the user asks for one owner; otherwise
+recommend the conditional write and stop. If the writers are not known yet,
+decide after step 3.
 
 ## 1. Check for existing work
 
-Read recent history of the files involved and look for open branches or pull
-requests on the same code.
-
-Done when no landed or in-flight change covers the finding. If one does,
-report it and stop.
+Read recent history of the files and look for open branches or pull requests
+on the same code. If a landed or in-flight change covers the finding, report
+it and stop.
 
 ## 2. Reproduce
 
-Write a test that replays the failing event sequence from the finding. A
-sequential defect (a missing transition, an unhandled result) is replayed in
-order. A race runs its writers in two independent database sessions against
-the engine production uses: same engine, major version, isolation level and
-connection pooling mode. Repository mocks and in-memory fakes have no locks or
-isolation, and writers that share a process lock (a mutex, a channel, an
-in-memory queue) prove nothing about replicas.
+Write a test that replays the finding's event sequence and asserts its reason
+(the final state, the error), so it goes red for that reason only. A
+sequential defect replays in order. A race runs its writers in two
+independent sessions on the production engine, major version, isolation level
+and pooling mode; mocks, in-memory fakes and a shared process lock prove
+nothing about replicas. Force the interleaving from the database: hold the
+row lock or key from a second connection, or, on a store that never blocks,
+put a barrier in the test between each writer's read and write. Hooks in code
+are for tests only.
 
-Force the interleaving from the database where the code has no seam: hold the
-row lock or the key from a second connection, so writer A blocks at a known
-point while writer B finishes. On a store that never blocks, place the barrier
-in the test, between each writer's read and its write. Hooks inside the code
-belong to test code only. Assert the reason from the finding (the final state,
-the error), so the test goes red for that reason and no other.
+- **Red** on repeated runs: continue.
+- **Green** after the sessions really interleaved: stop and report that it
+  did not reproduce, with what you tried. The finder's label stays.
+- **Blocked** (another engine or settings, a harness that wraps each test in
+  one transaction): fix the harness where you can (Django
+  `TransactionTestCase`, a test database on the production engine) and rerun;
+  otherwise report the blocker.
 
-The step ends one of three ways:
-
-- **Red** on repeated runs, for the stated reason: continue.
-- **Green** after the sessions really interleaved on that engine, isolation
-  level and pooling mode: stop and report that the defect did not reproduce,
-  with what you tried. The finder's label stays; a Confirmed static trace is
-  not downgraded by a missing red test.
-- **Blocked**: the test has not spoken yet. The production engine is
-  unavailable, the test database is another engine, the isolation level or
-  pooling mode differs, or the harness wraps each test in one transaction so
-  a second session never sees the rows. Fix the harness where you can (Django
-  `TransactionTestCase` or `pytest.mark.django_db(transaction=True)`, a test
-  database on the production engine) and run the step again; otherwise report
-  the blocker and leave the design for later.
-
-When the user asks for one owner and there is no defect to reproduce, pin
-today's behaviour instead: green tests of the event sequences that matter,
-written before any change. They stand in for the red test in step 7.
+When the user wants one owner and there is no defect, pin today's behaviour
+with green tests of the sequences that matter, written before any change.
+They stand in for the red test.
 
 ## 3. Inventory the writers
 
-Find every code path that writes the state, not only the one in the finding.
-Search by column or field name, table name, repository method and raw SQL
-text. Look in request handlers, background workers and schedulers, message
-consumers, CLI and admin tools, seed and fixture scripts, data migrations and
-backfills, and generic "save the whole entity" paths. Inspect the database
-too (triggers, cascades, grants), and find out whether another service or
-repository writes the same table.
+Find every path that writes the state: search by column, table, repository
+method and raw SQL across handlers, workers, schedulers, consumers, CLI and
+admin tools, seeds, fixtures, migrations, backfills and generic whole-entity
+saves. Check the database (triggers, cascades, grants) and whether another
+service writes the table.
 
-| Writer | `path:line` | Guard today (lock, version, none) | After: actor, bypass (why) or out of band |
-| ------ | ----------- | --------------------------------- | ----------------------------------------- |
+| Writer | `path:line` | Guard today | After: actor, bypass (why) or out of band |
+| ------ | ----------- | ----------- | ----------------------------------------- |
 
-End the table with `writers outside this repository: unknown` unless the user
-named them. A shared database user or an empty search here is no evidence
-about another repository.
-
-Done when every search hit is classified. A missed writer is how the race
-comes back.
+End with `writers outside this repository: unknown` unless the user named
+them; a local search proves nothing about other repositories. Done when every
+hit is classified.
 
 ## 4. Design the actor
 
-The contract:
-
-1. **Machine.** States, events, guards and named effects, with no I/O, clock
-   or randomness; the actor stamps the time onto the event once. A typed
-   `(state, event) -> next state and effects | rejected` function is enough.
-   Use a statechart library only if the project already has one, and read
-   [statechart libraries](references/statechart-libraries.md) before using it.
-   A delay is a persisted due time plus the existing scheduler sending an
-   event, never a timer in memory.
-2. **Actor.** The only entry point. For each event, read the state and every
-   guard input, run the transition, and commit the accepted event's writes
-   (new state, duplicate receipt, effects) as one atomic bundle that the
-   database accepts only if what was read still holds. With a row lock, the
-   locking statement is the read, in the same transaction as the write. On a
-   store without interactive transactions, the guard is the conditional write
-   itself: on a condition failure, reload and run the event again. A lock
-   that outlives the transaction, such as a session lock or a lock attribute
-   you write and clear, is no guard. A rejected event changes no state and
-   sends no effects; where its key must keep its answer (a client idempotency
-   key), it records the rejection as the key's receipt under the guard. A
-   replay the current code answers with success still gets that success. Logs
-   and metrics go after commit.
+1. **Machine.** A pure `(state, event) -> next state and effects | rejected`
+   function: no I/O, clock or randomness (the actor stamps the time on the
+   event). Use a statechart library only if the project has one, after
+   reading [statechart libraries](references/statechart-libraries.md). A delay
+   is a persisted due time plus the existing scheduler, never a timer in
+   memory.
+2. **Actor.** The only entry point. Per event: read the state and every guard
+   input, run the transition, and commit the new state, receipt and effects
+   as one atomic bundle the database accepts only if what was read still
+   holds. A rejected event changes no state and sends no effects; where its
+   key must keep its answer (a client idempotency key), record the rejection
+   as its receipt. A replay the current code answers with success still gets
+   that success. Logs and metrics go after commit.
 3. **Persistence.** Keeps every guarantee the write path has today: locks,
-   version columns, unique constraints, idempotency receipts, outbox.
+   versions, unique constraints, receipts, outbox.
 
-Before designing the guard, read [guarded writes](references/guarded-writes.md).
-The design answers each item that applies: guard, guard inputs, current read,
-no row yet, atomic bundle, contention, duplicates, identity, outcomes, logs.
+Read [guarded writes](references/guarded-writes.md) and answer each item that
+applies.
 
-Ask the user, with two to four options and a recommendation, before leaving
-this contract or the current behaviour: a schema change (a state, version or
-receipt column, an outbox table), a new error response in a public API, an
-external call whose outcome can be unknown and has no idempotency key the
-receiver stores, an automatic resend of such a call, a writer that cannot go
-through the actor, a store that cannot commit the bundle atomically.
+A call to another system cannot join the transaction. If its result must move
+the state, persist an awaiting state (`pending`, request id, parameters)
+first; the result is a second event. If delivery can wait, write it to an
+outbox in the same transaction; the relay ships in the same change and
+replaces the direct call in the same cutover. Contention retries cover only
+rolled-back transactions; an unknown outcome goes to a reconciler shipped
+with the change, never to a blind resend. Read
+[external effects](references/external-effects.md) for either path.
 
-### External effects
+Ask the user, with two to four options and a recommendation, before a schema
+change, a new error in a public API, an external call with an unknown outcome
+and no idempotency key the receiver stores (or its automatic resend), a
+writer that cannot go through the actor, or a store that cannot commit the
+bundle atomically.
 
-A call to another system cannot join the database transaction. Decide two
-things separately; they often combine:
-
-- **Must the result move the state?** Persist an awaiting state first:
-  `pending` with a request id and the stored parameters, whoever dispatches.
-  The result arrives as a second event.
-- **Can delivery wait?** Write the call to an outbox in the same transaction
-  and let a relay send it. The outbox table is a schema change to ask about,
-  its relay ships in the same change, and the old direct call is removed in
-  the same cutover, so each effect has exactly one sender.
-
-Contention retries cover only the database transaction that rolled back; a
-call that already left the process is outside that loop. An unknown outcome
-goes to a reconciler shipped in the same change: it asks the receiver about
-the request id where the receiver supports a lookup, and otherwise leaves the
-row `uncertain` for a person. Read
-[external effects](references/external-effects.md) before designing either
-path.
-
-Done when each part of the contract names its table, guard and code location
-in this codebase, every transition that calls another system names its
-awaiting state and sender, and every departure has the user's answer.
+Done when each part names its table, guard and code location, each external
+call names its awaiting state and sender, and each departure has the user's
+answer.
 
 ## 5. Write the scenario table
 
-Before changing code, write
-`precondition | event sequence | expected state | expected effects and response | test`,
-one planned test per row, in the test file or the plan. Cover each that
-applies:
-
-- the same event twice, a retry after an unknown outcome, a redelivery after
-  the first attempt committed;
-- two writers in both orders, in separate sessions;
-- a stale result after a newer one, a cancel or teardown;
-- a crash between an external call and recording its result, and between
-  commit and relay delivery (kill the process where the harness allows it);
-- a rolled-back transaction leaving the old state;
-- concurrent first writes when no row exists yet;
-- stored states the new machine does not know, such as rows mid-flight today.
-
-Mark a row n/a only with a `path:line` showing the sequence cannot happen. The
-design you are about to write does not count as such evidence.
-
-Done when every applicable row names its test.
+Before coding, write
+`precondition | events | expected state | effects and response | test`, one
+test per row. Cover what applies: the same event twice, a retry after an
+unknown outcome, a redelivery after commit; two writers in both orders, in
+separate sessions; a stale result, cancel or teardown; a crash after an
+external call or between commit and relay; a rollback; concurrent first
+writes; stored states the new machine does not know. A row is n/a only with a
+`path:line` showing the sequence cannot happen; the new design is no such
+evidence.
 
 ## 6. Implement
 
-- Write the machine, the actor and the persistence. Move each writer in this
-  repository that assigns the state at runtime to the actor, and delete its
-  old write path so one route remains.
-- Generic saves keep writing their other columns and stop writing the state
-  column. A test shows that a stale state in a loaded entity does not land.
-- Applied migrations stay as they are. Fixtures and seeds may insert the
-  initial state; list them as bypasses. Any other bypass takes the same guard.
-- Old binaries keep running during a rolling deploy. A new column stays
-  nullable and outside the guard until they are gone; the first guard is a
-  predicate the current writers already store, usually the status. Until they
-  are gone they can still overwrite the actor's commit, as they could before;
-  if that window is not acceptable, ask the user whether to first ship a
-  release that puts the same guard on the old write paths, or to drain them
-  before the actor takes traffic.
-- Before the machine rejects a stored state, list every state the current
-  code can write (from the inventory) and which states exist in the data,
-  through a bounded query the user agrees to, written down. A state from
-  either list keeps a path in the machine until its rows are resolved; a
-  backfill or repair is the user's decision.
+- Move every runtime writer in this repository to the actor and delete its
+  old write path. Generic saves stop writing the state column; a test shows
+  that a stale loaded state does not land.
+- Keep applied migrations. Seeds and fixtures may insert the initial state as
+  listed bypasses; any other bypass takes the same guard.
+- Old binaries keep running during a rolling deploy: a new column stays
+  nullable and outside the guard until they are gone, and the first guard is
+  a predicate they already store (usually the status). Until then they can
+  still overwrite the actor's commit; if that window is not acceptable, ask
+  whether to first guard the old paths or to drain them before the actor
+  takes traffic.
+- Before the machine rejects a stored state, list the states the current code
+  can write and those in the data (a bounded query the user agrees to). Each
+  keeps a path until its rows are resolved; a backfill is the user's call.
 
 Done when every inventory row reads actor, bypass or out of band, and the
 project builds.
 
 ## 7. Verify
 
-- The test from step 2 is green. For a race, the losing session also received
-  the engine's own decision: a lock wait, a conditional-check failure or a
-  unique violation; a correct final row alone does not pass. A sequential
-  defect passes on its replay assertions.
-- Every scenario row is green, effects and responses included.
-- Race tests pass on repeated runs, and the existing suite is green.
-- A new search for writes to the state finds only the actor and listed
-  bypasses.
-- Every outside writer is named as converted, guarded or absent; otherwise the
-  report says the race is not proven fixed for the unknown ones.
+- The step 2 test is green. For a race, the losing session got the engine's
+  own refusal (a lock wait, a conditional-check failure, a unique violation);
+  a correct final row alone is not enough.
+- Every scenario row passes, effects and responses included; race tests pass
+  on repeated runs; the existing suite is green.
+- A fresh search finds writes only in the actor and listed bypasses.
+- Each outside writer is converted, guarded or absent; otherwise the race is
+  not proven fixed for the unknown ones.
 
-Done when all five hold. The defect stays open while old binaries still write
-the old way; the report calls it fixed only after they are drained. Then hand
-commit, review and pull request to the project's usual workflow.
+The defect counts as fixed only after old binaries are drained. Then hand
+commit and review to the project's usual workflow.
 
 ## Several machines
 
-Write a plan next to the finding report, or where the project keeps plans,
-with one row per actor: `actor | writers that move | key check`. Order by
-dependency: actors sharing a write path go in sequence, independent ones in
-any order. Ask once whether to plan all of them or a pilot, unless the user
-already said.
-
-Run steps 1 to 7 for one actor at a time, one change each, every one with its
-own red test, or its baseline tests when there is no defect. Local loops
-(quotas, rate limits, backoff, worker start and stop) stay with their owners
-unless they write shared persisted state.
-
-The plan is done when every finding has a row or a stated reason it is not
-converted. The work is done when every row has passed step 7 or carries its
-reason.
+Write a plan next to the finding report, or where the project keeps plans:
+`actor | writers that move | key check`, actors sharing a write path in
+sequence. Ask once whether to do all of them or a pilot. Convert one actor
+per change, each through steps 1 to 7 with its own red or baseline test.
+Local loops (quotas, rate limits, backoff, worker lifecycle) stay with their
+owners unless they write shared persisted state. Done when every finding has
+passed step 7 or has a stated reason.
 
 ## Report
 
-Write in the user's language:
+In the user's language:
 
-1. What was red and is now green (or the baseline tests that stayed green),
-   with the test name, the guard, and, for a race, the engine error the
-   losing session received.
-2. The writer inventory, bypasses with reasons, and outside writers.
+1. What went from red to green (or the baseline that stayed green): the test,
+   the guard and, for a race, the engine error the losing session received.
+2. The writer inventory, bypasses with reasons, outside writers.
 3. Scenario rows marked n/a, each with its `path:line`.
 4. What is left: remaining actors, open decisions, the rollout window.
