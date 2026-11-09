@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="604" viewBox="0 0 1280 604" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6e7781"/></marker>
+<marker id="arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#cf222e"/></marker>
+</defs>
+<rect width="1280" height="604" rx="24" fill="#ffffff"/>
+<text x="40" y="68" font-size="32" font-weight="600" fill="#1f2328">Three writers, one row. Give the row one owner.</text>
+<g transform="translate(0,-36)">
+<rect x="40" y="140" width="540" height="460" rx="16" fill="#f6f8fa" stroke="#d0d7de"/>
+<rect x="640" y="140" width="600" height="460" rx="16" fill="#f6f8fa" stroke="#d0d7de"/>
+<path d="M596 370 L624 370" stroke="#59636e" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="76" y="186" font-size="18" font-weight="600" fill="#1f2328">In the code</text>
+<text x="76" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#59636e">read · decide · write, in each writer</text>
+<rect x="76" y="250" width="150" height="52" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<text x="151" y="281" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">API handler</text>
+<rect x="76" y="336" width="150" height="52" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<text x="151" y="367" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">Worker</text>
+<rect x="76" y="422" width="150" height="52" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<text x="151" y="453" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">CLI script</text>
+<path d="M226 276 L394 330" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<text x="300" y="290" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#59636e">paid</text>
+<path d="M226 362 L394 362" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<text x="310" y="352" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#59636e">paid</text>
+<path d="M226 448 L394 396" fill="none" stroke="#cf222e" stroke-width="1.75" stroke-dasharray="6 5" marker-end="url(#arrow-bad)"/>
+<text x="318" y="446" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#a40e26">pending</text>
+<rect x="396" y="300" width="148" height="124" rx="10" fill="#ffebe9" stroke="#cf222e" stroke-width="2"/>
+<text x="470" y="334" text-anchor="middle" font-size="15" font-weight="600" fill="#a40e26">order row</text>
+<text x="470" y="370" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#a40e26">status: pending</text>
+<text x="470" y="398" text-anchor="middle" font-size="13" fill="#a40e26">paid is lost</text>
+<text x="76" y="572" font-size="15" fill="#59636e">The CLI read the row before it was paid. The last write wins.</text>
+<text x="676" y="186" font-size="18" font-weight="600" fill="#1f2328">After the conversion</text>
+<text x="676" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#59636e">writers send events</text>
+<rect x="676" y="246" width="128" height="44" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<text x="740" y="273" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">API handler</text>
+<rect x="676" y="324" width="128" height="44" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<text x="740" y="351" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">Worker</text>
+<rect x="676" y="402" width="128" height="44" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<text x="740" y="429" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2328">CLI script</text>
+<path d="M804 268 L850 300" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<path d="M804 346 L850 346" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<path d="M804 424 L850 392" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<rect x="852" y="226" width="208" height="240" rx="16" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<text x="956" y="260" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2328">Actor</text>
+<text x="876" y="302" font-size="14" fill="#1f2328">1  lock the row</text>
+<text x="876" y="340" font-size="14" fill="#1f2328">2  pure transition</text>
+<text x="876" y="378" font-size="14" fill="#1f2328">3  write or reject</text>
+<text x="876" y="416" font-size="14" fill="#1f2328">4  effects after commit</text>
+<text x="956" y="448" text-anchor="middle" font-size="12" fill="#59636e">one transaction per event</text>
+<path d="M1060 346 L1102 346" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
+<rect x="1104" y="300" width="108" height="92" rx="10" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
+<text x="1158" y="334" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">order row</text>
+<text x="1158" y="364" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1f2328">status: paid</text>
+<path d="M956 466 L956 498" fill="none" stroke="#cf222e" stroke-width="1.75" stroke-dasharray="6 5" marker-end="url(#arrow-bad)"/>
+<rect x="866" y="500" width="180" height="40" rx="20" fill="#ffebe9" stroke="#cf222e" stroke-width="1.5"/>
+<text x="956" y="525" text-anchor="middle" font-size="14" font-weight="600" fill="#a40e26">stale event rejected</text>
+<text x="676" y="572" font-size="15" fill="#59636e">The database stays the authority, so replicas and restarts agree.</text>
+</g>
+</svg>

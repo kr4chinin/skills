@@ -204,3 +204,6 @@ For distributed persistence defects, consider:
 - persisted retries or wakeups and reconciliation for interrupted work,
   preserving idempotency and using bounded batches that cover the full eligible
   recovery scope without starving later records.
+
+When the state lives in a database and several writers race over it, the fix
+is carried out by the `convert-state-machines-to-actors` skill.

@@ -31,6 +31,29 @@ depending on how far it was traced through the code.
 Inspired by [this post](https://x.com/steveruizok/status/2116552016218710389)
 by Steve Ruiz.
 
+## convert-state-machines-to-actors
+
+Fixes an implicit state machine whose state lives in a database by turning it
+into an actor: one owner that every writer goes through, a pure transition
+function, and a transaction with a lock around each event. The database stays
+the authority, so it works across replicas and restarts.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/convert-state-machines-to-actors/diagram-dark.svg">
+  <img alt="Before: an API handler, a worker and a CLI script each write the order row; the CLI read it before it was paid and overwrites paid with pending. After: all three send events to one actor that locks the row, runs a pure transition, writes or rejects, and sends effects after commit; the stale event is rejected and the row stays paid." src="assets/convert-state-machines-to-actors/diagram-light.svg">
+</picture>
+
+```sh
+npx skills add kr4chinin/skills --skill convert-state-machines-to-actors
+```
+
+> Convert the implicit state machines you found in the database to actors.
+
+It starts from a test that reproduces the race on the real database engine,
+lists every code path that writes the state, including workers, CLI tools and
+seed scripts, and moves them all to the actor. For several machines it writes
+a plan and converts one actor per change.
+
 ## License
 
 MIT
