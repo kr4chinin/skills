@@ -204,3 +204,9 @@ For distributed persistence defects, consider:
 - persisted retries or wakeups and reconciliation for interrupted work,
   preserving idempotency and using bounded batches that cover the full eligible
   recovery scope without starving later records.
+
+A conditional write or a transaction stays the first fix. When the writers are
+too many or too scattered for one conditional write to cover, or the user asks
+to put every writer behind one owner, use the `convert-state-machines-to-actors`
+skill. If it is not installed, recommend it to the user (`npx skills add
+kr4chinin/skills --skill convert-state-machines-to-actors`) instead.
