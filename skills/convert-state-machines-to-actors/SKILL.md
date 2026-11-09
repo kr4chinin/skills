@@ -187,9 +187,10 @@ project builds.
 
 ## 7. Verify
 
-- The test from step 2 is green, and the losing session received the engine's
-  own decision: a lock wait, a conditional-check failure or a unique
-  violation. A correct final row alone does not pass.
+- The test from step 2 is green. For a race, the losing session also received
+  the engine's own decision: a lock wait, a conditional-check failure or a
+  unique violation; a correct final row alone does not pass. A sequential
+  defect passes on its replay assertions.
 - Every scenario row is green, effects and responses included.
 - Race tests pass on repeated runs, and the existing suite is green.
 - A new search for writes to the state finds only the actor and listed
@@ -197,7 +198,7 @@ project builds.
 - Every outside writer is named as converted, guarded or absent; otherwise the
   report says the race is not proven fixed for the unknown ones.
 
-Done when all five hold. The race stays open while old binaries still write
+Done when all five hold. The defect stays open while old binaries still write
 the old way; the report calls it fixed only after they are drained. Then hand
 commit, review and pull request to the project's usual workflow.
 
@@ -221,8 +222,8 @@ reason.
 
 Write in the user's language:
 
-1. What was red and is now green, with the test name, the guard, and the
-   engine error the losing session received.
+1. What was red and is now green, with the test name, the guard, and, for a
+   race, the engine error the losing session received.
 2. The writer inventory, bypasses with reasons, and outside writers.
 3. Scenario rows marked n/a, each with its `path:line`.
 4. What is left: remaining actors, open decisions, the rollout window.
