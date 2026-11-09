@@ -208,4 +208,5 @@ For distributed persistence defects, consider:
 A conditional write or a transaction stays the first fix. When the writers are
 too many or too scattered for one conditional write to cover, or the user asks
 to put every writer behind one owner, use the `convert-state-machines-to-actors`
-skill.
+skill. If it is not installed, recommend it to the user (`npx skills add
+kr4chinin/skills --skill convert-state-machines-to-actors`) instead.
