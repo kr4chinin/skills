@@ -24,8 +24,9 @@ decide after step 3.
 ## 1. Check for existing work
 
 Read recent history of the files and look for open branches or pull requests
-on the same code. If a landed or in-flight change covers the finding (or,
-when the user asked for one owner, the conversion), report it and stop.
+on the same code. Report any change that covers the finding. Stop if it
+does, unless the user asked for one owner; then stop only if a change
+already makes that conversion.
 
 ## 2. Reproduce
 
@@ -41,9 +42,10 @@ are for tests only.
 
 - **Red** on repeated runs: continue.
 - **Green** after the sessions really interleaved in the finding's order
-  (both read before either wrote): stop and report that it did not
-  reproduce, with what you tried. The finder's label stays. Without that
-  order, the step is blocked.
+  (both read before either wrote): report that it did not reproduce, with
+  what you tried; the finder's label stays. Stop, unless the user asked for
+  one owner; then continue with the baseline below. Without that order, the
+  step is blocked.
 - **Blocked** (another engine or settings, a harness that wraps each test in
   one transaction): fix the harness where you can (Django
   `TransactionTestCase`, a test database on the production engine) and rerun;
