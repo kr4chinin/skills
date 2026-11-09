@@ -23,9 +23,10 @@ how each stays correct.
 
 - Only the relay sends. The old direct call is removed in the same cutover
   that enables the relay; two senders deliver the effect twice.
-- Key each effect by the event key plus a stable per-transition effect id or
-  position. One event can emit the same named effect several times with
-  different parameters, so the name alone collides.
+- Key each effect by the entity, the event key and a stable per-transition
+  effect id or position. Two entities can share an event key, and one event
+  can emit the same named effect several times with different parameters, so
+  neither the event key nor the name alone is unique.
 - Claim in a short transaction: take rows with `SELECT ... FOR UPDATE SKIP
   LOCKED`, stamp the claim owner and an expiry, commit. Send outside any
   transaction, then mark sent on the condition that the claim is still held.
@@ -34,17 +35,23 @@ how each stays correct.
 - When one entity's effects must stay in order, give them a per-entity
   sequence assigned in the actor's transaction and make only the earliest
   unsent effect of each entity claimable. `SKIP LOCKED` alone lets another
-  relay skip an earlier row and send a later one first. When order does not
-  matter, leave it out.
+  relay skip an earlier row and send a later one first. A relay whose claim
+  expired mid-send can still deliver an earlier effect after its replacement
+  sent a later one, so order holds only at a receiver that deduplicates by
+  effect key or drops a sequence older than the last it saw; otherwise do not
+  promise order. When order does not matter, leave the sequence out.
 - Delivery is at least once. A receiver with no deduplication key (email,
   SMS, many webhooks) eventually gets a duplicate after a crash between send
-  and mark-sent: make the effect safe to repeat, or give it an awaiting state.
+  and mark-sent. Make the effect safe to repeat; otherwise an expired claim
+  on it may already have been sent, so it goes to the reconciler instead of
+  back to the queue, and the resend rules of the awaiting state apply.
 
 ## Leases
 
 - A worker holding a lease carries a fencing token that grows with every
-  takeover. The token is part of the write's guard, checked in the same
-  atomic write; a read-then-compare in the worker leaves a gap.
+  takeover. The token and the lease's expiry are both part of the write's
+  guard, checked in the same atomic write; until a takeover the token still
+  matches after expiry, and a read-then-compare in the worker leaves a gap.
 - Judge expiry by the database clock, not the worker's clock.
 - Fencing protects the row, not an effect the stale worker already sent. Pass
   the token or request id to the receiver where it accepts one.
