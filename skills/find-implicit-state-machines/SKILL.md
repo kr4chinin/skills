@@ -205,5 +205,7 @@ For distributed persistence defects, consider:
   preserving idempotency and using bounded batches that cover the full eligible
   recovery scope without starving later records.
 
-When the state lives in a database and several writers race over it, the fix
-is carried out by the `convert-state-machines-to-actors` skill.
+A conditional write or a transaction stays the first fix. When the writers are
+too many or too scattered for one conditional write to cover, or the user asks
+to put every writer behind one owner, use the `convert-state-machines-to-actors`
+skill.

@@ -41,7 +41,7 @@
 <path d="M804 424 L850 392" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
 <rect x="852" y="226" width="208" height="240" rx="16" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
 <text x="956" y="260" text-anchor="middle" font-size="16" font-weight="600" fill="#1f2328">Actor</text>
-<text x="876" y="302" font-size="14" fill="#1f2328">1  lock the row</text>
+<text x="876" y="302" font-size="14" fill="#1f2328">1  guarded load</text>
 <text x="876" y="340" font-size="14" fill="#1f2328">2  pure transition</text>
 <text x="876" y="378" font-size="14" fill="#1f2328">3  write or reject</text>
 <text x="876" y="416" font-size="14" fill="#1f2328">4  effects after commit</text>
