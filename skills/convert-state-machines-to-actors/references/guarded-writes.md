@@ -30,8 +30,11 @@ The entity's own version does not cover a parent row or a quota row.
 
 ## Current read
 
-Load after the guard is taken. An entity loaded earlier, an ORM identity-map
-hit or a snapshot read still shows the old version.
+With a lock, load after taking it; for a row lock the locking read is the
+load. With compare-and-set or a conditional write, the read comes first and
+the write's condition checks that it still holds; on a failure, reload from
+the database. Either way, an entity loaded earlier, an ORM identity-map hit
+or a snapshot read still shows the old version.
 
 ## Locks that outlive the transaction
 
@@ -82,7 +85,10 @@ cannot be atomic, ask the user.
 
 - Every entry point gives an event a key (message or delivery id, client
   request id), or the design states that this entry point re-evaluates
-  duplicates against the current state.
+  duplicates against the current state. Re-evaluation works only when a
+  replay is a no-op against the new state ("mark paid"). An event that is not
+  (an increment, a debit) needs a key; without one, an unknown commit is
+  `uncertain`, not retried.
 - Keep one receipt per key: a unique row or item keyed by entity and event
   key, written in the same bundle as the state, kept as long as redelivery is
   possible. One "last event" column is overwritten by the next event and

@@ -28,7 +28,9 @@ const [next, actions] = transition(machine, snapshot, event);
 - `transition` and `initialTransition` execute no action implementations.
   `assign` is already applied to the returned context. Translate
   `firstActions` like `actions`, in the same write that inserts the first
-  state.
+  state. When the creating event is itself a transition out of the initial
+  state, check `first.can(event)` and run `transition(machine, first, event)`
+  before inserting; insert `next` with both action lists in one write.
 - Only named actions with serializable `params` become effects (an outbox row
   or an awaiting state), mapped by `type` and `params`. An `xstate.*` entry
   (`xstate.raise`, `xstate.log`, `xstate.emit`, send, cancel, spawn, stop), an
