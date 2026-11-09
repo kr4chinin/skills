@@ -24,8 +24,8 @@ decide after step 3.
 ## 1. Check for existing work
 
 Read recent history of the files and look for open branches or pull requests
-on the same code. If a landed or in-flight change covers the finding, report
-it and stop.
+on the same code. If a landed or in-flight change covers the finding (or,
+when the user asked for one owner, the conversion), report it and stop.
 
 ## 2. Reproduce
 
@@ -40,8 +40,10 @@ put a barrier in the test between each writer's read and write. Hooks in code
 are for tests only.
 
 - **Red** on repeated runs: continue.
-- **Green** after the sessions really interleaved: stop and report that it
-  did not reproduce, with what you tried. The finder's label stays.
+- **Green** after the sessions really interleaved in the finding's order
+  (both read before either wrote): stop and report that it did not
+  reproduce, with what you tried. The finder's label stays. Without that
+  order, the step is blocked.
 - **Blocked** (another engine or settings, a harness that wraps each test in
   one transaction): fix the harness where you can (Django
   `TransactionTestCase`, a test database on the production engine) and rerun;
@@ -124,7 +126,8 @@ evidence.
   old write path. Generic saves stop writing the state column; a test shows
   that a stale loaded state does not land.
 - Keep applied migrations. Seeds and fixtures may insert the initial state as
-  listed bypasses; any other bypass takes the same guard.
+  listed bypasses; any other bypass takes the same guard and commits the
+  same receipt and effects.
 - Old binaries keep running during a rolling deploy: a new column stays
   nullable and outside the guard until they are gone, and the first guard is
   a predicate they already store (usually the status). Until then they can
@@ -140,9 +143,10 @@ project builds.
 
 ## 7. Verify
 
-- The step 2 test is green. For a race, the losing session got the engine's
-  own refusal (a lock wait, a conditional-check failure, a unique violation);
-  a correct final row alone is not enough.
+- The step 2 test is green. For a race, the database decided the loser: it
+  waited on the lock and then read the winner's state, or its guarded write
+  hit zero rows, a conditional-check failure or a unique violation. A lock
+  wait alone or a correct final row is not enough.
 - Every scenario row passes, effects and responses included; race tests pass
   on repeated runs; the existing suite is green.
 - A fresh search finds writes only in the actor and listed bypasses.
@@ -167,7 +171,7 @@ passed step 7 or has a stated reason.
 In the user's language:
 
 1. What went from red to green (or the baseline that stayed green): the test,
-   the guard and, for a race, the engine error the losing session received.
+   the guard and, for a race, what the database did to the losing session.
 2. The writer inventory, bypasses with reasons, outside writers.
 3. Scenario rows marked n/a, each with its `path:line`.
 4. What is left: remaining actors, open decisions, the rollout window.

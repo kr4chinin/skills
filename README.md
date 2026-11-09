@@ -58,9 +58,9 @@ state, including workers, CLI tools and seed scripts, names writers in other
 services it cannot move, and moves the writers in this repository to the
 actor, except listed bypasses that keep the same guard. The actor works on
 any store that can guard a write: row locks, compare-and-set or conditional
-writes. The race counts as fixed only when the losing session gets the
-database's own refusal. For several machines it writes a plan and converts
-one actor per change.
+writes. The race counts as fixed only when the database itself decides the
+losing session. For several machines it writes a plan and converts one actor
+per change.
 
 ## License
 

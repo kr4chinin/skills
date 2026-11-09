@@ -12,8 +12,9 @@ Read when a transition calls another system.
   until reconciled.
 - The reconciler ships in the same change and owns stale `pending` rows. It
   asks the receiver about the request id where it can, and resends only when
-  the receiver documents and stores that key (an id minted only here is not
-  one) and the user allowed automatic resend. Otherwise the row stays
+  the receiver documents that key as idempotent, applying the same key and
+  parameters once (an id minted only here is not one), and the user allowed
+  automatic resend. Otherwise the row stays
   `uncertain` for a person.
 
 ## Outbox
@@ -29,7 +30,7 @@ Read when a transition calls another system.
 - For per-entity order, assign a sequence in the actor's transaction and make
   only each entity's earliest unsent effect claimable. A relay whose claim
   expired mid-send can still deliver late, so promise order only to a
-  receiver that deduplicates by effect key or drops stale sequences.
+  receiver that applies effects by sequence.
 - Delivery is at least once. If the receiver cannot deduplicate (email, SMS,
   many webhooks), make the effect safe to repeat; otherwise an expired claim
   on it goes to the reconciler, not back to the queue, under the resend rules
@@ -41,8 +42,8 @@ Read when a transition calls another system.
   guard checks the token and the lease expiry, by the database clock, in the
   same atomic write; until a takeover the token alone still matches after
   expiry.
-- Fencing protects the row, not an effect already sent. Pass the token or
-  request id to the receiver where it accepts one.
+- Fencing protects the row, not the worker's calls. They are fenced only
+  where the receiver rejects a stale token or request id.
 
 ## Late results
 

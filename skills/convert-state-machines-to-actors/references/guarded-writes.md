@@ -49,8 +49,9 @@ aggregate invariant ("allocations within quota") needs the scope row locked.
 
 The state with its full context, the receipt and the `pending` intent or
 outbox rows commit together. Without multi-item transactions that means one
-item holding all of them, or the store's transactional API. If the bundle
-cannot be atomic, ask the user.
+item holding all of them, sized for the redelivery window under the store's
+item limit, or the store's transactional API. If the bundle cannot be
+atomic, ask the user.
 
 ## Contention
 
@@ -64,13 +65,14 @@ cannot be atomic, ask the user.
 
 ## Duplicates
 
-- Each entry point gives events a key (message or delivery id, client request
-  id), or states that it re-evaluates duplicates against the current state.
-  That works only when a replay is a no-op ("mark paid"); an increment or
-  debit needs a key, and without one an unknown commit is `uncertain`, not
-  retried.
-- Keep one receipt per key, a unique row keyed by entity and event key, in
-  the same bundle and for as long as redelivery is possible. A "last event"
+- Each entry point gives events a key that survives redelivery (a message
+  id, a client request id; not a per-delivery tag), or states that it
+  re-evaluates duplicates against the current state. That works only when a
+  replay is a no-op ("mark paid"); an increment or debit needs a key, and
+  without one an unknown commit is `uncertain`, not retried.
+- Keep one receipt per entity and event key (a unique row, or an entry in the
+  entity's own item) in the same bundle, for as long as redelivery is
+  possible. A "last event"
   column cannot answer an older replay.
 - After taking the guard and before the transition, return the recorded
   outcome for a known key. The same key with different parameters is a

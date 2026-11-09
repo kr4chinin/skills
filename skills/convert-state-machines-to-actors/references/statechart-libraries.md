@@ -40,7 +40,9 @@ const [next, actions] = transition(machine, snapshot, event);
   Comparing state values misses a targetless transition that changes only
   context.
 - Persist `next.value` and the whole `next.context`; `resolveState` with a
-  partial context leaves fields undefined.
+  partial context leaves fields undefined. Context and effect `params` must
+  survive the round trip through storage (JSON turns a `Date` into a string):
+  decode them to their types, and test the round trip.
 - Sound only without history states, invoked or spawned actors, `after`
   delays, delayed `raise`, `sendTo`, `emit` and inline actions:
   `resolveState` rebuilds with no history or children, and a pure transition
