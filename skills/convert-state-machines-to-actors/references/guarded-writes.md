@@ -65,11 +65,11 @@ atomic, ask the user.
 
 ## Duplicates
 
-- Each entry point gives events a key that survives redelivery (a message
-  id, a client request id; not a per-delivery tag), or states that it
-  re-evaluates duplicates against the current state. That works only when a
-  replay is a no-op ("mark paid"); an increment or debit needs a key, and
-  without one an unknown commit is `uncertain`, not retried.
+- Each entry point gives events a key that is unique per event and survives
+  redelivery (a message id, a client request id; not a per-delivery tag), or
+  states that it re-evaluates duplicates against the current state. That
+  works only when a replay is a no-op ("mark paid"); an increment or debit
+  needs a key, and without one an unknown commit is `uncertain`, not retried.
 - Keep one receipt per entity and event key (a unique row, or an entry in the
   entity's own item) in the same bundle, for as long as redelivery is
   possible. A "last event"

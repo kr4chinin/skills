@@ -13,9 +13,9 @@ Read when a transition calls another system.
 - The reconciler ships in the same change and owns stale `pending` rows. It
   asks the receiver about the request id where it can, and resends only when
   the receiver documents that key as idempotent, applying the same key and
-  parameters once (an id minted only here is not one), and the user allowed
-  automatic resend. Otherwise the row stays
-  `uncertain` for a person.
+  parameters once, even concurrently, for at least the resend window (an id
+  minted only here is not one), and the user allowed automatic resend.
+  Otherwise the row stays `uncertain` for a person.
 
 ## Outbox
 
@@ -43,7 +43,8 @@ Read when a transition calls another system.
   same atomic write; until a takeover the token alone still matches after
   expiry.
 - Fencing protects the row, not the worker's calls. They are fenced only
-  where the receiver rejects a stale token or request id.
+  where the receiver rejects a stale token atomically with applying the call;
+  a request id that only deduplicates does not fence distinct calls.
 
 ## Late results
 
