@@ -54,11 +54,13 @@ It is the follow-up to
 the machines, this one converts them when a single conditional write is not
 enough. It starts from a test that reproduces the race in two database
 sessions on the production engine, lists every code path that writes the
-state, including workers, CLI tools, seed scripts and other services, and
-moves them to the actor, except listed bypasses that keep the same guard. The
-actor works on any store that can guard a write: row locks, compare-and-set,
-conditional writes or unique keys. For several machines it writes a plan and
-converts one actor per change.
+state, including workers, CLI tools and seed scripts, names writers in other
+services it cannot move, and moves the writers in this repository to the
+actor, except listed bypasses that keep the same guard. The actor works on
+any store that can guard a write: row locks, compare-and-set or conditional
+writes. The race counts as fixed only when the losing session gets the
+database's own refusal. For several machines it writes a plan and converts
+one actor per change.
 
 ## License
 

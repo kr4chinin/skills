@@ -45,7 +45,7 @@
 <text x="876" y="340" font-size="14" fill="#1f2328">2  pure transition</text>
 <text x="876" y="378" font-size="14" fill="#1f2328">3  write or reject</text>
 <text x="876" y="416" font-size="14" fill="#1f2328">4  effects after commit</text>
-<text x="956" y="448" text-anchor="middle" font-size="12" fill="#59636e">one transaction per event</text>
+<text x="956" y="448" text-anchor="middle" font-size="12" fill="#59636e">one guarded write per event</text>
 <path d="M1060 346 L1102 346" fill="none" stroke="#6e7781" stroke-width="1.75" marker-end="url(#arrow)"/>
 <rect x="1104" y="300" width="108" height="92" rx="10" fill="#ffffff" stroke="#6e7781" stroke-width="1.5"/>
 <text x="1158" y="334" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">order row</text>
