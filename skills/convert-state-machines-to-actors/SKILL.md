@@ -63,6 +63,10 @@ The step ends one of three ways:
   database on the production engine) and run the step again; otherwise report
   the blocker and leave the design for later.
 
+When the user asks for one owner and there is no defect to reproduce, pin
+today's behaviour instead: green tests of the event sequences that matter,
+written before any change. They stand in for the red test in step 7.
+
 ## 3. Inventory the writers
 
 Find every code path that writes the state, not only the one in the finding.
@@ -102,7 +106,9 @@ The contract:
    store without interactive transactions, the guard is the conditional write
    itself: on a condition failure, reload and run the event again. A lock
    that outlives the transaction, such as a session lock or a lock attribute
-   you write and clear, is no guard. A rejected event writes nothing, and a
+   you write and clear, is no guard. A rejected event changes no state and
+   sends no effects; where its key must keep its answer (a client idempotency
+   key), it records the rejection as the key's receipt under the guard. A
    replay the current code answers with success still gets that success. Logs
    and metrics go after commit.
 3. **Persistence.** Keeps every guarantee the write path has today: locks,
@@ -177,10 +183,16 @@ Done when every applicable row names its test.
   initial state; list them as bypasses. Any other bypass takes the same guard.
 - Old binaries keep running during a rolling deploy. A new column stays
   nullable and outside the guard until they are gone; the first guard is a
-  predicate the current writers already store, usually the status.
-- Before the machine rejects a stored state, look at which states exist in
-  the data, through a bounded query or sample the user agrees to, written
-  down. A backfill or repair is the user's decision.
+  predicate the current writers already store, usually the status. Until they
+  are gone they can still overwrite the actor's commit, as they could before;
+  if that window is not acceptable, ask the user whether to first ship a
+  release that puts the same guard on the old write paths, or to drain them
+  before the actor takes traffic.
+- Before the machine rejects a stored state, list every state the current
+  code can write (from the inventory) and which states exist in the data,
+  through a bounded query the user agrees to, written down. A state from
+  either list keeps a path in the machine until its rows are resolved; a
+  backfill or repair is the user's decision.
 
 Done when every inventory row reads actor, bypass or out of band, and the
 project builds.
@@ -211,8 +223,9 @@ any order. Ask once whether to plan all of them or a pilot, unless the user
 already said.
 
 Run steps 1 to 7 for one actor at a time, one change each, every one with its
-own red test. Local loops (quotas, rate limits, backoff, worker start and
-stop) stay with their owners unless they write shared persisted state.
+own red test, or its baseline tests when there is no defect. Local loops
+(quotas, rate limits, backoff, worker start and stop) stay with their owners
+unless they write shared persisted state.
 
 The plan is done when every finding has a row or a stated reason it is not
 converted. The work is done when every row has passed step 7 or carries its
@@ -222,8 +235,9 @@ reason.
 
 Write in the user's language:
 
-1. What was red and is now green, with the test name, the guard, and, for a
-   race, the engine error the losing session received.
+1. What was red and is now green (or the baseline tests that stayed green),
+   with the test name, the guard, and, for a race, the engine error the
+   losing session received.
 2. The writer inventory, bypasses with reasons, and outside writers.
 3. Scenario rows marked n/a, each with its `path:line`.
 4. What is left: remaining actors, open decisions, the rollout window.
