@@ -1,8 +1,57 @@
-# Worked example
+# Report layout
 
-A small file-import service, to show the shape of a report: row IDs, findings
-anchored to rows, breaking inputs. The domain and the findings are invented.
-Take the form, not the content.
+Read before writing the report. The layout comes first, then a worked
+example.
+
+## Rank
+
+Rank findings by what the user sees go wrong, taking `unverified` steps as
+true and, where the intent is unknown, the worse reading:
+
+1. **Wrong or lost**: wrong data on the screen, lost work, an effect fired
+   twice or never.
+2. **Stuck**: something never completes, or only after manual action.
+3. **Late or costly**: the result is right, but slower or paid for twice.
+4. **Latent**: nothing goes wrong today.
+
+## Sections, in order
+
+1. A one-sentence summary; the screen, the scope, the revision and the
+   intended delivery semantics; a table of findings numbered in rank order:
+   number, title, group, rows, rank, steps cited, fix kind.
+2. The model: the three tables.
+3. Findings grouped by the model's lifecycles or owners, so that each group
+   is one batch to review and ship. Order groups by their highest-ranked
+   finding, and findings inside a group so that each follows those it
+   depends on. Rank 3 and 4 get one line each unless asked. A rank 1 or 2
+   finding has:
+   - a plain-language title saying what the user sees;
+   - its rows, its breaking input and what you checked while trying to
+     disprove it;
+   - the fix kind: `bug fix` (restores behaviour the code or its documents
+     already state), `behaviour change` (the intent is unstated, or the fix
+     changes what users or other systems rely on, such as replacing an
+     endless requeue with bounded retries and a dead-letter queue) or
+     `external contract` (cannot be fixed inside this program);
+   - the smallest fix and what it touches: other writers and readers of its
+     rows, test doubles of a changed constructor or port, generated API
+     contracts, consumers in other applications, and whether it holds while
+     old and new instances run side by side;
+   - the findings it depends on or resolves.
+4. Decisions for the owner: every `behaviour change` and every unstated
+   intent, with the options.
+5. Contracts with other systems: every **elsewhere** enforcer and every
+   `external contract` finding, with the guarantee needed and from whom (for
+   example, an ordering guarantee between two producers).
+6. The refactor split, when it ran.
+7. Ruled out and not covered: how many candidates you dropped and which
+   enforcer settled them, `unknown` cells, lifecycles not modelled, hand-offs
+   to a skill that was not available.
+
+## Worked example
+
+A small file-import service. The domain and the findings are invented: take
+the form, not the content.
 
 **Summary:** a redelivered chunk counts its lines twice, so an import can be
 announced as complete with half of its lines missing; a refactor on this
@@ -19,7 +68,7 @@ requeued without a bound (`queue.ts:12-15`).
 | F2 | A finished import flips to cancelled after its "complete" email | cancel | S1, T3, T4 | 1 | 3/3 | bug fix, see the refactor split |
 | F3 | Per-line warnings are computed and stored, and nothing shows them | chunk consumer | S4, T2 | 3 | no reader in `src/` | behaviour change |
 
-## Model
+### Model
 
 | ID | Value | Lives in | Writers | Readers on the way to the screen | Source, or copy of |
 | -- | ----- | -------- | ------- | -------------------------------- | ------------------ |
@@ -41,9 +90,9 @@ requeued without a bound (`queue.ts:12-15`).
 | E1b | completion email | T3 | every line is in S3 | here, but checked against S2, a copy: `consumer.ts:66` |
 | E2 | chunk messages | T1 | the file is readable by the consumer | elsewhere: object storage read-after-write, `unverified` |
 
-## Findings
+### Findings
 
-### Chunk consumer
+#### Chunk consumer
 
 **F1. "Import complete" is sent while lines are still missing** (rank 1)
 
@@ -70,21 +119,21 @@ gone. Depends on nothing; F3 changes the same handler, so ship F1 first.
 
 **F3** (rank 3): one validation pass per line; no reader of S4 in `src/`.
 
-### Cancel
+#### Cancel
 
 **F2. A finished import flips to cancelled after its "complete" email**
 (rank 1): introduced on this branch; input and fix under the refactor split.
 
-## Decisions for the owner
+### Decisions for the owner
 
 - F3: show the warnings, or stop computing them?
 
-## Contracts with other systems
+### Contracts with other systems
 
 - E2 relies on read-after-write in object storage. If that weakens, the
   consumer cannot read the file and the import stays at processing.
 
-## Refactor split (`main..HEAD`)
+### Refactor split (`main..HEAD`)
 
 | Change | Class | Argument or breaking input |
 | ------ | ----- | -------------------------- |
@@ -104,7 +153,7 @@ Fix (bug fix): keep the condition in the write (`WHERE status =
 'processing'`) and answer 409 when it changes no row. Touches: the other
 callers of `setStatus`.
 
-## Ruled out and not covered
+### Ruled out and not covered
 
 - Ruled out, 2. "T3 applied twice queues two emails": the outbox row is
   written only when the guarded update changed a row (`consumer.ts:70`). "A
