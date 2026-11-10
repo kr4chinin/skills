@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="604" viewBox="0 0 1280 604" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>
+</defs>
+<rect width="1280" height="604" rx="24" fill="#0d1117"/>
+<text x="40" y="68" font-size="32" font-weight="600" fill="#e6edf3">Recover the model first. Then every finding names a row.</text>
+<g transform="translate(0,-36)">
+<rect x="40" y="140" width="540" height="460" rx="16" fill="#161b22" stroke="#30363d"/>
+<rect x="640" y="140" width="600" height="460" rx="16" fill="#161b22" stroke="#30363d"/>
+<path d="M596 370 L624 370" stroke="#9198a1" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="76" y="186" font-size="18" font-weight="600" fill="#e6edf3">In the code</text>
+<text x="76" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#9198a1">one import, written in three places</text>
+<rect x="76" y="246" width="468" height="52" rx="10" fill="#0d1117" stroke="#30363d"/>
+<text x="96" y="277" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#e6edf3">imports.status</text>
+<text x="524" y="277" text-anchor="end" font-size="13" fill="#9198a1">set by the API and the consumer</text>
+<rect x="76" y="310" width="468" height="118" rx="10" fill="#3a1418" stroke="#f85149" stroke-width="2"/>
+<text x="96" y="337" font-size="13" font-weight="600" fill="#ffa198">one fact, stored twice</text>
+<text x="96" y="370" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#ffa198">imports.rows_done</text>
+<text x="524" y="370" text-anchor="end" font-size="13" fill="#ffa198">a counter, += n per chunk</text>
+<text x="96" y="404" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#ffa198">import_rows</text>
+<text x="524" y="404" text-anchor="end" font-size="13" fill="#ffa198">one row per line</text>
+<rect x="76" y="440" width="468" height="52" rx="10" fill="#0d1117" stroke="#30363d"/>
+<text x="96" y="471" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#e6edf3">on chunk: insert rows · rows_done += n · ack</text>
+<text x="76" y="572" font-size="15" fill="#9198a1">Nothing says which step may repeat, or in what order.</text>
+<text x="676" y="186" font-size="18" font-weight="600" fill="#e6edf3">What the agent reports</text>
+<rect x="676" y="206" width="250" height="134" rx="10" fill="#0d1117" stroke="#30363d"/>
+<text x="694" y="231" font-size="13" font-weight="600" fill="#9198a1">State</text>
+<text x="694" y="260" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#e6edf3">S1  status</text>
+<text x="694" y="288" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#ffa198">S2  rows_done</text>
+<text x="908" y="288" text-anchor="end" font-size="12" fill="#ffa198">copy of S3</text>
+<text x="694" y="316" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#e6edf3">S3  import_rows</text>
+<rect x="942" y="206" width="262" height="134" rx="10" fill="#0d1117" stroke="#30363d"/>
+<text x="960" y="231" font-size="13" font-weight="600" fill="#9198a1">Transitions</text>
+<text x="960" y="258" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#ffa198">T2  chunk delivered</text>
+<text x="992" y="277" font-size="12" fill="#ffa198">twice: rows safe, counter not</text>
+<text x="960" y="305" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#e6edf3">T3  counter = total</text>
+<text x="992" y="324" font-size="12" fill="#9198a1">idempotent, guarded by status</text>
+<rect x="676" y="356" width="528" height="180" rx="10" fill="#3a1418" stroke="#f85149" stroke-width="2"/>
+<text x="696" y="385" font-size="15" font-weight="600" fill="#ffa198">F1  “Import complete” while lines are missing</text>
+<text x="696" y="408" font-size="13" fill="#ffa198">rows S2, S3, T2, T3 · smallest breaking input:</text>
+<rect x="696" y="422" width="154" height="36" rx="18" fill="#0d1117" stroke="#f85149" stroke-width="1.5"/>
+<text x="773" y="445" text-anchor="middle" font-size="13" font-weight="600" fill="#ffa198">1  chunk committed</text>
+<rect x="863" y="422" width="154" height="36" rx="18" fill="#0d1117" stroke="#f85149" stroke-width="1.5"/>
+<text x="940" y="445" text-anchor="middle" font-size="13" font-weight="600" fill="#ffa198">2  crash before ack</text>
+<rect x="1030" y="422" width="154" height="36" rx="18" fill="#0d1117" stroke="#f85149" stroke-width="1.5"/>
+<text x="1107" y="445" text-anchor="middle" font-size="13" font-weight="600" fill="#ffa198">3  chunk redelivered</text>
+<text x="696" y="487" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#ffa198">rows_done = 200, import_rows = 100</text>
+<text x="696" y="513" font-size="13" fill="#ffa198">The import flips to done and the email goes out early.</text>
+<text x="676" y="572" font-size="15" fill="#9198a1">Each finding names its rows and the smallest input that breaks it.</text>
+</g>
+</svg>

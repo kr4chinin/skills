@@ -1,0 +1,117 @@
+# Worked example
+
+A small file-import service, to show the shape of a report: row IDs, findings
+anchored to rows, breaking inputs. The domain and the findings are invented.
+Take the form, not the content.
+
+**Summary:** a redelivered chunk counts its lines twice, so an import can be
+announced as complete with half of its lines missing; a refactor on this
+branch also lets a finished import flip to cancelled.
+
+**Screen:** the import page (status, progress bar, row table) and the
+completion email. **Scope:** `src/imports/` at `3f2a91c`, the head of
+`main..HEAD`. **Intended delivery:** at least once, unordered, manual ack,
+requeued without a bound (`queue.ts:12-15`).
+
+| # | Title | Group | Rows | Rank | Steps cited | Fix kind |
+| - | ----- | ----- | ---- | ---- | ----------- | -------- |
+| F1 | "Import complete" is sent while lines are still missing | chunk consumer | S2, S3, T2, T3, E1b | 1 | 4/4 | bug fix |
+| F2 | A finished import flips to cancelled after its "complete" email | cancel | S1, T3, T4 | 1 | 3/3 | bug fix, see the refactor split |
+| F3 | Per-line warnings are computed and stored, and nothing shows them | chunk consumer | S4, T2 | 3 | no reader in `src/` | behaviour change |
+
+## Model
+
+| ID | Value | Lives in | Writers | Readers on the way to the screen | Source, or copy of |
+| -- | ----- | -------- | ------- | -------------------------------- | ------------------ |
+| S1 | import status | `imports.status` | T1, T3, T4 | import page | source |
+| S2 | lines done | `imports.rows_done` | T2 | progress bar; guard of T3 | copy of S3 |
+| S3 | imported rows | `import_rows`, unique on (import, line) | T2 | row table | source |
+| S4 | per-line warnings | `import_rows.warnings` | T2 | `unobserved` | source |
+
+| ID | Event | Writes | Guard | Applied twice | Against other transitions |
+| -- | ----- | ------ | ----- | ------------- | ------------------------- |
+| T1 | upload accepted | S1 = processing | upload id is the primary key, `api.ts:22` | idempotent | none |
+| T2 | chunk delivered | S3 insert, S4, S2 += n | locks the import row, skips unless processing, `consumer.ts:50` | S3 idempotent (unique key, `consumer.ts:52`); S2 not (`consumer.ts:58`) | commutes with T2 of other chunks (`rows_done = rows_done + n` in SQL, `consumer.ts:58`); with T4, ordered by the row lock |
+| T3 | S2 reaches the line count | S1 = done | `WHERE status = 'processing'`, `consumer.ts:66` | idempotent | order-dependent with T4: T3 after T4 is rejected by the guard; T4 after T3 is not (F2) |
+| T4 | user cancels | S1 = cancelled | reads the status, `api.ts:38`, then writes without a condition, `api.ts:41` | idempotent | see T3 |
+
+| ID | Effect | Fired by | Must be true before | Enforcer |
+| -- | ------ | -------- | ------------------- | -------- |
+| E1a | completion email | T3 | queued once per import | here: outbox row written only when T3's update changed a row, `consumer.ts:70` |
+| E1b | completion email | T3 | every line is in S3 | here, but checked against S2, a copy: `consumer.ts:66` |
+| E2 | chunk messages | T1 | the file is readable by the consumer | elsewhere: object storage read-after-write, `unverified` |
+
+## Findings
+
+### Chunk consumer
+
+**F1. "Import complete" is sent while lines are still missing** (rank 1)
+
+Rows: S2 is a copy of S3; T2 is idempotent for S3 and not for S2; T3 and
+E1b check the copy.
+
+```text
+start: import 7 is processing, 200 lines in two chunks, rows_done = 0
+1. chunk 1 delivered: 100 rows inserted, rows_done = 100, committed  consumer.ts:52-58
+2. process dies before the ack                                       consumer.ts:58-63
+3. chunk 1 redelivered: inserts skipped, rows_done = 200             consumer.ts:52-58, queue.ts:12
+4. rows_done reaches 200: status = done, email queued                consumer.ts:66-70
+seen: "import complete" while the table holds 100 of 200 lines
+expected: completion only after chunk 2
+```
+
+Checked: no delivery id is stored; the unique key covers S3 only; nothing
+recomputes S2 from S3.
+
+Fix (bug fix): add to `rows_done` the number of rows the insert created.
+Touches: the consumer's tests that expect `+ n`; S2 has no other writer. In
+a mixed rollout old instances still add `n`, so it holds only once they are
+gone. Depends on nothing; F3 changes the same handler, so ship F1 first.
+
+**F3** (rank 3): one validation pass per line; no reader of S4 in `src/`.
+
+### Cancel
+
+**F2. A finished import flips to cancelled after its "complete" email**
+(rank 1): introduced on this branch; input and fix under the refactor split.
+
+## Decisions for the owner
+
+- F3: show the warnings, or stop computing them?
+
+## Contracts with other systems
+
+- E2 relies on read-after-write in object storage. If that weakens, the
+  consumer cannot read the file and the import stays at processing.
+
+## Refactor split (`main..HEAD`)
+
+| Change | Class | Argument or breaking input |
+| ------ | ----- | -------------------------- |
+| `parseLine` extracted into its own module | provably equivalent | a move: same call, same arguments, no row touched |
+| cancel handler reuses `setStatus` instead of its own conditional update | trust me (F2) | T4's guard is no longer atomic with its write; input below |
+
+```text
+start: import 7 is processing, its last chunk is in flight
+1. cancel handler reads status = processing            api.ts:38
+2. last chunk delivered: status = done, email queued   consumer.ts:50-70
+3. cancel handler writes status = cancelled            api.ts:41
+seen (new): "import complete" email, and the page shows cancelled
+seen (old): cancel answers 409 and the import stays done
+```
+
+Fix (bug fix): keep the condition in the write (`WHERE status =
+'processing'`) and answer 409 when it changes no row. Touches: the other
+callers of `setStatus`.
+
+## Ruled out and not covered
+
+- Ruled out, 2. "T3 applied twice queues two emails": the outbox row is
+  written only when the guarded update changed a row (`consumer.ts:70`). "A
+  chunk lands after cancel": T2 locks the import row and skips unless it is
+  processing (`consumer.ts:50`).
+- Not covered: the outbox relay (not modelled); readers of
+  `import_rows.warnings` outside this repository (`unknown`); the reachable
+  states of the status lifecycle, a hand-off to
+  `find-implicit-state-machines`, which is not installed
+  (`npx skills add kr4chinin/skills --skill find-implicit-state-machines`).
