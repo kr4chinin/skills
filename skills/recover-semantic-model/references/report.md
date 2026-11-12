@@ -5,8 +5,10 @@ example.
 
 ## Rank
 
-Rank findings by what the user sees go wrong, taking `unverified` steps as
-true and, where the intent is unknown, the worse reading:
+Rank a finding by what the user sees when its breaking input runs. Count
+`unverified` steps as true; the steps-cited count carries the doubt.
+Unstated intent does not lower the rank: it makes the fix a `behaviour
+change`.
 
 1. **Wrong or lost**: wrong data on the screen, lost work, an effect fired
    twice or never.
@@ -17,22 +19,21 @@ true and, where the intent is unknown, the worse reading:
 ## Sections, in order
 
 1. A one-sentence summary; the screen, the scope, the revision and the
-   intended delivery semantics; a table of findings numbered in rank order:
-   number, title, group, rows, rank, steps cited, fix kind.
-2. The model: the three tables.
-3. Findings grouped by the model's lifecycles or owners, so that each group
-   is one batch to review and ship. Order groups by their highest-ranked
-   finding, and findings inside a group so that each follows those it
-   depends on. Rank 3 and 4 get one line each unless asked. A rank 1 or 2
-   finding has:
+   intended delivery semantics.
+2. The model: the three tables, once per lifecycle if you built several.
+3. Findings. First an index numbered in rank order: number, title, group,
+   rows, rank, steps cited, fix kind. Then the findings, grouped by the
+   model's lifecycles or owners so that each group is one batch to review
+   and ship. Order groups by their highest-ranked finding, and findings
+   inside a group so that each follows those it depends on. Rank 3 and 4
+   get one line each unless asked. A rank 1 or 2 finding has:
    - a plain-language title saying what the user sees;
    - its rows, its breaking input and what you checked while trying to
      disprove it;
    - the fix kind: `bug fix` (restores behaviour the code or its documents
      already state), `behaviour change` (the intent is unstated, or the fix
-     changes what users or other systems rely on, such as replacing an
-     endless requeue with bounded retries and a dead-letter queue) or
-     `external contract` (cannot be fixed inside this program);
+     changes what users or other systems rely on, such as how retries end)
+     or `external contract` (cannot be fixed inside this program);
    - the smallest fix and what it touches: other writers and readers of its
      rows, test doubles of a changed constructor or port, generated API
      contracts, consumers in other applications, and whether it holds while
@@ -62,12 +63,6 @@ completion email. **Scope:** `src/imports/` at `3f2a91c`, the head of
 `main..HEAD`. **Intended delivery:** at least once, unordered, manual ack,
 requeued without a bound (`queue.ts:12-15`).
 
-| # | Title | Group | Rows | Rank | Steps cited | Fix kind |
-| - | ----- | ----- | ---- | ---- | ----------- | -------- |
-| F1 | "Import complete" is sent while lines are still missing | chunk consumer | S2, S3, T2, T3, E1b | 1 | 4/4 | bug fix |
-| F2 | A finished import flips to cancelled after its "complete" email | cancel | S1, T3, T4 | 1 | 3/3 | bug fix, see the refactor split |
-| F3 | Per-line warnings are computed and stored, and nothing shows them | chunk consumer | S4, T2 | 3 | no reader in `src/` | behaviour change |
-
 ### Model
 
 | ID | Value | Lives in | Writers | Readers on the way to the screen | Source, or copy of |
@@ -80,9 +75,9 @@ requeued without a bound (`queue.ts:12-15`).
 | ID | Event | Writes | Guard | Applied twice | Against other transitions |
 | -- | ----- | ------ | ----- | ------------- | ------------------------- |
 | T1 | upload accepted | S1 = processing | upload id is the primary key, `api.ts:22` | idempotent | none |
-| T2 | chunk delivered | S3 insert, S4, S2 += n | locks the import row, skips unless processing, `consumer.ts:50` | S3 idempotent (unique key, `consumer.ts:52`); S2 not (`consumer.ts:58`) | commutes with T2 of other chunks (`rows_done = rows_done + n` in SQL, `consumer.ts:58`); with T4, ordered by the row lock |
-| T3 | S2 reaches the line count | S1 = done | `WHERE status = 'processing'`, `consumer.ts:66` | idempotent | order-dependent with T4: T3 after T4 is rejected by the guard; T4 after T3 is not (F2) |
-| T4 | user cancels | S1 = cancelled | reads the status, `api.ts:38`, then writes without a condition, `api.ts:41` | idempotent | see T3 |
+| T2 | chunk delivered | S3 insert, S4, S2 += n | locks the import row, skips unless processing, `consumer.ts:50` | S3 idempotent (unique key, `consumer.ts:52`); S2 not (`consumer.ts:58`) | commutes with T2 of other chunks (`rows_done = rows_done + n` in SQL, `consumer.ts:58`); order-dependent with T4, decided by the row lock and the guard: a chunk after the cancel is skipped |
+| T3 | S2 reaches the line count | S1 = done | `WHERE status = 'processing'`, `consumer.ts:66` | idempotent | order-dependent with T4, and nothing covers T4's read: T3 after T4's write changes no row; T4's read before T3 and its write after is F2 |
+| T4 | user cancels | S1 = cancelled | reads the status and answers 409 unless it is processing, `api.ts:38`; the write has no condition, `api.ts:41` | idempotent | see T3 |
 
 | ID | Effect | Fired by | Must be true before | Enforcer |
 | -- | ------ | -------- | ------------------- | -------- |
@@ -91,6 +86,12 @@ requeued without a bound (`queue.ts:12-15`).
 | E2 | chunk messages | T1 | the file is readable by the consumer | elsewhere: object storage read-after-write, `unverified` |
 
 ### Findings
+
+| # | Title | Group | Rows | Rank | Steps cited | Fix kind |
+| - | ----- | ----- | ---- | ---- | ----------- | -------- |
+| F1 | "Import complete" is sent while lines are still missing | chunk consumer | S2, S3, T2, T3, E1b | 1 | 4/4 | bug fix |
+| F2 | A finished import flips to cancelled after its "complete" email | cancel | S1, T3, T4 | 1 | 3/3 | bug fix, see the refactor split |
+| F3 | Per-line warnings are computed and stored, and nothing shows them | chunk consumer | S4, T2 | 3 | no reader in `src/` | behaviour change |
 
 #### Chunk consumer
 
@@ -149,9 +150,13 @@ seen (new): "import complete" email, and the page shows cancelled
 seen (old): cancel answers 409 and the import stays done
 ```
 
+Checked: `setStatus` writes by id alone (`status.ts:9`), and the handler
+takes no lock between its read and its write.
+
 Fix (bug fix): keep the condition in the write (`WHERE status =
 'processing'`) and answer 409 when it changes no row. Touches: the other
-callers of `setStatus`.
+callers of `setStatus`. Old instances still have the conditional update, so
+it holds in a mixed rollout.
 
 ### Ruled out and not covered
 

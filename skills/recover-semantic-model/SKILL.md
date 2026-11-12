@@ -1,15 +1,14 @@
 ---
 name: recover-semantic-model
-description: Recover a program's minimal semantic model (the state that changes what the user sees, which transitions commute, repeat safely or depend on order, and what each effect requires), then audit it for nondeterminism, unenforced invariants, one fact stored twice and work nobody observes. Use when asked to recover or audit a semantic model, to check what is idempotent or order-dependent, or to split a refactor into provably equivalent and "trust me" changes with a breaking input for each.
+description: Recover a program's minimal semantic model (the state that changes what the user sees, how its transitions repeat and reorder, what each effect requires) and audit it for defects. Use when asked to recover or audit a semantic model, to check what is idempotent or order-dependent, or to split a refactor into provably equivalent and "trust me" changes.
 ---
 
 # Recover the semantic model
 
-A program's semantic model is the smallest description that predicts what its
-users observe: the values that matter, the transitions that change them, and
-what must hold before each effect. Recover it from the code first, then point
-every finding at a row of it; a finding that names no row reads like ordinary
-code review and is as hard to check.
+A program's semantic model is the smallest description that predicts what
+its users observe. Recover it from the code first, then point every finding
+at a row of it: a finding that names no row is ordinary code review, and as
+hard to check.
 
 This skill runs the request below, keeping its order and wording:
 
@@ -72,22 +71,20 @@ states is a different audit (see [Related skills](#related-skills)).
 
 ## 2. Transitions: what commutes, what's idempotent, what's order-dependent
 
-Every event that writes a state row: a user action, a request, a delivered
-message, a timer, a retry, a recovery job. Classify from the code, citing
-the line that makes it so.
+Every event that writes a state row or fires an effect: a user action, a
+request, a delivered message, a timer, a retry, a recovery job. Classify
+from the code, citing the line that makes it so.
 
 | ID | Event | Writes | Guard | Applied twice | Against other transitions |
 | -- | ----- | ------ | ----- | ------------- | ------------------------- |
 
 - **Idempotent**: applied twice, it leaves the same state and fires its
-  effects once. Name what makes it so (a guard on the current state, a
-  stored key, a unique constraint, a set instead of an increment), per row
-  where rows differ.
+  effects once; say so per row where rows differ.
 - **Commutes**: two transitions give the same state and effects in either
   order.
 - **Order-dependent**: the result depends on which lands first. Name what
-  decides today: a lock, a transaction, one consumer per key, a sequence
-  number, a caller's `await`, or nothing.
+  decides today (a lock, a sequence number, a caller's `await`, or nothing)
+  and whether it covers the whole transition, from its check to its write.
 
 Classify pairs only where both orders can happen: they touch the same rows
 and nothing orders their triggers. Write `unknown` instead of guessing; it
@@ -127,8 +124,9 @@ owner.
 
 Nondeterminism is a candidate only where it meets a row that cannot absorb
 it: a repeat (a retry, a redelivery, a double click) meets a cell that is
-not idempotent; two unordered events meet an order-dependent pair; an
-`await` separates an enforcer's check from the effect it protects.
+not idempotent; two unordered events meet an order-dependent pair that
+nothing decides, or whose mechanism leaves its check outside; an `await`
+separates an enforcer's check from the effect it protects.
 
 ### Invariants enforced by hope
 
@@ -148,15 +146,14 @@ which guards an effect, and what the user sees when they disagree.
 ### Work that never reaches the screen
 
 Start from `unobserved` rows and effects nothing reads: a value never read,
-a result discarded by a later guard, a recovery job for a state nothing
-produces, a message with no consumer, an error caught and dropped, paid work
-repeated although its first result was kept. Say what it costs (time, money,
-a held lock or slot); cost is its whole impact. No reader in this repository
-may still mean a reader elsewhere: a contract question.
+a result discarded by a later guard, an error caught and dropped, paid work
+repeated although its first result was kept. Say what it costs: time, money,
+a held lock or slot. No reader in this repository may still mean a reader
+elsewhere: a contract question.
 
 ## Check each finding
 
-Candidates fail in three ways: the code was misread, an enforcer elsewhere
+Candidates fail in three ways: the code was misread, an existing enforcer
 already covered the case, or two candidates shared a root cause. Before
 reporting one:
 
@@ -168,35 +165,28 @@ reporting one:
    literally, not by its shape: a `try` around `return send()` catches
    nothing from a promise it did not await. Then look along the writers and
    guards of the anchored rows for a check that already rejects a step. If
-   it is in this program, drop the candidate and list it as ruled out with
-   the `path:line`; if it is elsewhere, the candidate becomes a contract.
+   this program rejects it, drop the candidate and list it as ruled out
+   with the `path:line`. If only another system does, it is not a finding:
+   record the contract.
 4. **Merge by root cause.** Inputs that break at the same row and step are
    one finding with several symptoms; link findings whose fixes interact.
 
 ### Smallest breaking input
 
 A numbered event sequence from a named starting state to a wrong result on
-the screen:
-
-```text
-start: import 7 is processing, 200 lines in two chunks, rows_done = 0
-1. chunk 1 delivered: 100 rows inserted, rows_done = 100, committed  consumer.ts:52-58
-2. process dies before the ack                                       consumer.ts:58-63
-3. chunk 1 redelivered: inserts skipped, rows_done = 200             consumer.ts:52-58, queue.ts:12
-4. rows_done reaches 200: status = done, email queued                consumer.ts:66-70
-seen: "import complete" while the table holds 100 of 200 lines
-expected: completion only after chunk 2
-```
+the screen: `start:`, the steps, `seen:` and `expected:`, as in F1 of the
+[worked example](references/report.md#worked-example).
 
 - Each step is something a test can drive (a call, a delivered message, a
   second session, a killed process, a clock advance, a stored row), so the
   sequence becomes the regression test almost unchanged. Prose ("under load
   a message may be processed twice") is not a breaking input.
 - Smallest: removing any step removes the failure. One entity, and two
-  actors unless the defect needs a third.
+  parties unless the defect needs a third.
 - Every step cites the `path:line` that does it. A comment, or a call into
   code you could not read, is not a citation: mark the step `unverified`
-  with what it depends on, and report the count (`4/4 steps cited`).
+  with what it depends on. The count (`4/4 steps cited`) is the finding's
+  evidence level.
 - If you cannot build one, say so and name the assumption the code rests
   on. Do not invent one.
 
@@ -223,34 +213,32 @@ described as altering behaviour is not a refactor; list it apart.
 For each "trust me", give the smallest input that breaks it, with the old
 result and the new. If you tried and found none, say `no breaking input
 found` and name the assumption. One that breaks is a finding: rank it and
-report it once, here.
+report it once, here, with the fields of any other finding.
 
 ## Report
 
-Write in the user's language. Read [report layout](references/report.md)
-before writing the first table and follow it: the model first; findings
-ranked by what the user sees go wrong and grouped by lifecycle, one group
-per batch to ship; each with its fix kind and what the fix touches; owner
-decisions, contracts with other systems, and what was ruled out or not
-covered in their own sections.
+Write in the user's language. Read the
+[report layout](references/report.md) before writing the first table and
+follow it.
 
 The report describes one revision. Before a finding is implemented, by you
-or anyone else, replay its breaking input against the current code: an
-earlier fix from the same report may already have closed it.
+or anyone else, replay its breaking input against the current code and
+repeat the disproof: an earlier fix from the same report may already have
+closed it.
 
 ## Related skills
 
-This skill is complete on its own. Use the two below only when they are
-available in the session. When one is not, do not reproduce its method from
-memory: finish this audit, list the hand-off as not covered and give the
-install command.
+This skill is complete on its own. When a skill below is not available in
+the session, do not reproduce its method from memory: finish this audit,
+list the hand-off as not covered and give the install command.
 
-- `find-implicit-state-machines`: when a state row is a lifecycle (a status,
-  a phase, a set of flags) whose reachable states need reconstructing, and
-  for its checks on queues, workers, leases and durable workflows. Keep this
-  report's layout; add that skill's label and evidence method to each
-  finding as extra columns, as it defines them.
+- `find-implicit-state-machines` reconstructs the reachable states of a
+  state row that is a lifecycle (a status, a phase, a set of flags), and
+  audits queue, worker, lease and workflow lifecycles beyond the repeats
+  and reorderings modelled here. Keep this report's layout and terms; add
+  that skill's label only to findings that have a breaking input.
   `npx skills add kr4chinin/skills --skill find-implicit-state-machines`
-- `convert-state-machines-to-actors`: when a fix has to put several writers
-  of one persisted state behind a single owner.
+- `convert-state-machines-to-actors` is the fix when several writers of one
+  persisted state have to go behind a single owner. It edits code: name it
+  in the fix and run it only when asked.
   `npx skills add kr4chinin/skills --skill convert-state-machines-to-actors`

@@ -85,14 +85,10 @@ npx skills add kr4chinin/skills --skill recover-semantic-model
 The audit is read-only. The model comes first, as three tables, and every
 finding names the rows it violates and the smallest input that breaks it: a
 numbered event sequence that becomes the regression test almost unchanged.
-Before reporting a finding, the agent looks for the guard that already covers
-it. Each invariant names its enforcer (this program, another system or
-nobody), and each fix says whether it is a bug fix, a behaviour change for
-the owner to decide or a contract needed from another service. Findings are
-ranked by what the user sees go wrong and grouped by lifecycle, one group per
-batch to review. Asked about refactors, it splits a commit range, branch or
-diff into provably equivalent changes, with the argument, and "trust me"
-changes, each with its smallest breaking input.
+Each fix says whether it is a bug fix, a behaviour change for the owner to
+decide or a contract needed from another system. Asked about refactors, it
+splits a diff into provably equivalent and "trust me" changes, each "trust
+me" with its smallest breaking input.
 
 It works on its own and names
 [find-implicit-state-machines](#find-implicit-state-machines) and
