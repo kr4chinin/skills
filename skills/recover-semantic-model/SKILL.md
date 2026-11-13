@@ -78,17 +78,21 @@ from the code, citing the line that makes it so.
 | ID | Event | Writes | Guard | Applied twice | Against other transitions |
 | -- | ----- | ------ | ----- | ------------- | ------------------------- |
 
-- **Idempotent**: applied twice, it leaves the same state and fires its
-  effects once; say so per row where rows differ.
+- **Idempotent**: applied twice, it leaves the same state and adds no
+  effect beyond repeating its own response; say so per row where rows
+  differ.
 - **Commutes**: two transitions give the same state and effects in either
-  order.
+  order, interleaved included: a read followed by a write commutes only
+  when the two are atomic.
 - **Order-dependent**: the result depends on which lands first. Name what
-  decides today (a lock, a sequence number, a caller's `await`, or nothing)
-  and whether it covers the whole transition, from its check to its write.
+  makes each transition atomic from its check to its write (a lock, a
+  transaction, a conditional write, or nothing) and what picks the order (a
+  sequence number, a caller's `await`, or nothing). A lock excludes; it
+  does not pick.
 
 Classify pairs only where both orders can happen: they touch the same rows
-and nothing orders their triggers. Write `unknown` instead of guessing; it
-is a coverage gap, not a finding.
+or fire effects one reader sees, and nothing orders their triggers. Write
+`unknown` instead of guessing; it is a coverage gap, not a finding.
 
 ## 3. Dependencies: what must be true before each effect fires
 
@@ -124,9 +128,9 @@ owner.
 
 Nondeterminism is a candidate only where it meets a row that cannot absorb
 it: a repeat (a retry, a redelivery, a double click) meets a cell that is
-not idempotent; two unordered events meet an order-dependent pair that
-nothing decides, or whose mechanism leaves its check outside; an `await`
-separates an enforcer's check from the effect it protects.
+not idempotent; two unordered events meet a transition that is not atomic,
+or a pair whose order nothing picks and one outcome of which is wrong; an
+`await` separates an enforcer's check from the effect it protects.
 
 ### Invariants enforced by hope
 
@@ -164,10 +168,11 @@ reporting one:
 3. **Try to disprove it.** Read the control flow at each cited line
    literally, not by its shape: a `try` around `return send()` catches
    nothing from a promise it did not await. Then look along the writers and
-   guards of the anchored rows for a check that already rejects a step. If
-   this program rejects it, drop the candidate and list it as ruled out
-   with the `path:line`. If only another system does, it is not a finding:
-   record the contract.
+   guards of the anchored rows for a check that already rejects a step. A
+   check that rejects one sequence may let another through: try the other
+   routes to the same rows. If this program rejects them all, drop the
+   candidate and list it as ruled out with the `path:line`. If only
+   another system does, it is not a finding: record the contract.
 4. **Merge by root cause.** Inputs that break at the same row and step are
    one finding with several symptoms; link findings whose fixes interact.
 
@@ -201,11 +206,12 @@ history for refactors.
 Compare the rows each change touches at the base and at the head. A change
 described as altering behaviour is not a refactor; list it apart.
 
-- **Provably equivalent**: no row changes for any input, and the argument
-  fits in a line or two: a rename or move, an extraction that keeps the
-  calls and their order, a reordering of steps the transition table shows
+- **Provably equivalent**: for any input no row changes, nor what an effect
+  returns, throws or sends, nor the order of effects, and the argument fits
+  in a line or two: a rename or move, an extraction that keeps the calls
+  and their order, a reordering of steps the transition table shows
   commute. Passing tests are evidence, not the argument.
-- **Trust me**: a row changes, or the argument needs an assumption: an
+- **Trust me**: any of those changes, or the argument needs an assumption: an
   `await` added, removed or moved, a shifted transaction boundary, error
   handling moved across a call, a changed default, predicate or
   serialisation, anything near retries or acknowledgement.

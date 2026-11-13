@@ -75,8 +75,8 @@ requeued without a bound (`queue.ts:12-15`).
 | ID | Event | Writes | Guard | Applied twice | Against other transitions |
 | -- | ----- | ------ | ----- | ------------- | ------------------------- |
 | T1 | upload accepted | S1 = processing | upload id is the primary key, `api.ts:22` | idempotent | none |
-| T2 | chunk delivered | S3 insert, S4, S2 += n | locks the import row, skips unless processing, `consumer.ts:50` | S3 idempotent (unique key, `consumer.ts:52`); S2 not (`consumer.ts:58`) | commutes with T2 of other chunks (`rows_done = rows_done + n` in SQL, `consumer.ts:58`); order-dependent with T4, decided by the row lock and the guard: a chunk after the cancel is skipped |
-| T3 | S2 reaches the line count | S1 = done | `WHERE status = 'processing'`, `consumer.ts:66` | idempotent | order-dependent with T4, and nothing covers T4's read: T3 after T4's write changes no row; T4's read before T3 and its write after is F2 |
+| T2 | chunk delivered | S3 insert, S4, S2 += n | locks the import row, skips unless processing, `consumer.ts:50` | S3 idempotent (unique key, `consumer.ts:52`); S2 not (`consumer.ts:58`) | commutes with T2 of other chunks (`rows_done = rows_done + n` in SQL, `consumer.ts:58`); order-dependent with T4: both atomic under the row lock, nothing picks the order, either outcome is correct (a chunk after the cancel is skipped) |
+| T3 | S2 reaches the line count | S1 = done | `WHERE status = 'processing'`, `consumer.ts:66` | idempotent | order-dependent with T4, and T4 is not atomic: T3 after T4's write changes no row; T4's read before T3 and its write after is F2 |
 | T4 | user cancels | S1 = cancelled | reads the status and answers 409 unless it is processing, `api.ts:38`; the write has no condition, `api.ts:41` | idempotent | see T3 |
 
 | ID | Effect | Fired by | Must be true before | Enforcer |
@@ -119,6 +119,7 @@ a mixed rollout old instances still add `n`, so it holds only once they are
 gone. Depends on nothing; F3 changes the same handler, so ship F1 first.
 
 **F3** (rank 3): one validation pass per line; no reader of S4 in `src/`.
+Readers outside the repository are `unknown`, so this is the owner's call.
 
 #### Cancel
 

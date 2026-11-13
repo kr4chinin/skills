@@ -73,7 +73,7 @@ never reaches the screen.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/recover-semantic-model/diagram-dark.svg">
-  <img alt="In the code, an import's progress is stored twice, as a counter and as the imported rows, and nothing says which step may repeat. The agent recovers a state table and a transition table, then reports a finding that names its rows and its smallest breaking input: chunk committed, crash before ack, chunk redelivered. The counter reads 200 for 100 rows and the import is marked done early." src="assets/recover-semantic-model/diagram-light.svg">
+  <img alt="In the code, a chunk handler stores an import's progress twice, as the imported rows and as a counter of them, and nothing says which step may repeat. The agent recovers the model, then reports a finding that names its rows and its smallest breaking input: chunk committed, crash before ack, chunk redelivered. The counter reads 200 for 100 rows, so the import is announced complete while lines are missing." src="assets/recover-semantic-model/diagram-light.svg">
 </picture>
 
 ```sh
