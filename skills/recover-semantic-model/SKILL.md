@@ -86,14 +86,16 @@ from the code, citing the line that makes it so.
   when the two are atomic.
 - **Order-dependent**: the result depends on which lands first. Name what
   makes each transition atomic from its check to its write (a lock, a
-  conditional write, a transaction whose isolation level covers the read,
-  or nothing) and what picks the order (a sequence number, a caller's
-  `await`, or nothing). A lock excludes; it does not pick.
+  conditional write, a transaction with the isolation level that covers
+  its read, or nothing) and what picks the order (a sequence number, a
+  caller's `await`, or nothing). A lock excludes; it does not pick.
 
-Classify pairs only where both orders can happen: they touch the same rows
-or fire effects one reader sees, and nothing fixes which lands first;
-requests sent in order can still finish out of order. Write `unknown`
-instead of guessing; it is a coverage gap, not a finding.
+Classify pairs only where both orders can happen: they touch the same
+rows, fire effects one reader sees, or one's effect is a precondition of
+the other's, and nothing fixes which lands first; requests sent in order
+can still finish out of order. Write `unknown` instead of guessing, as
+for a transaction whose isolation level you could not establish; it is a
+coverage gap, not a finding.
 
 ## 3. Dependencies: what must be true before each effect fires
 
