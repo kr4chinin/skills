@@ -100,6 +100,26 @@ they go deeper; when one is not installed, it reports what was left out.
 Inspired by [this post](https://x.com/infinterenders/status/2119676620680339490)
 by render ([@infinterenders](https://x.com/infinterenders)).
 
+## prune-comments
+
+Audits the code comments in a repository and plans which to delete, keep,
+rewrite or replace with a refactor. Agents copy what a codebase already does,
+so a comment that excuses a temporary workaround teaches them that workarounds
+are fine; the comments that remain should each explain something the code
+cannot, such as a browser quirk.
+
+```sh
+npx skills add kr4chinin/skills --skill prune-comments
+```
+
+> Identify the useless code comments we can prune in my repo.
+
+The first pass is read-only and ends with a plan: workaround and hack comments
+that are best fixed by a refactor, patterns that can be deleted outright, and
+the comments worth keeping. It applies the plan only when asked, deletions
+first and each refactor as its own change, and can add a comment rule to
+`AGENTS.md` so the codebase stays pruned.
+
 ## License
 
 MIT
