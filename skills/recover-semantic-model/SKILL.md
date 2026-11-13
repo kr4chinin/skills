@@ -1,6 +1,6 @@
 ---
 name: recover-semantic-model
-description: Recover a program's minimal semantic model (the state that changes what users see, which transitions are idempotent, commute or depend on order, what each effect requires). Use when asked to recover or audit that model, or to split a refactor into provably equivalent and "trust me" changes.
+description: Recover a program's minimal semantic model (the state that changes what users see, how its transitions repeat and reorder, what each effect requires). Use when asked to recover or audit that model, to check what is idempotent or order-dependent, or to split a refactor into provably equivalent and "trust me" changes.
 ---
 
 # Recover the semantic model
@@ -82,10 +82,10 @@ searched).
 
 ## Then find
 
-The model is done when every S row names its writers and readers (or
-`unobserved`), every T row classifies its repeat and its pairs (or
-`unknown`) and every E row names its enforcer. Then run all four passes; a
-candidate becomes a finding only after
+The model is done when every S row names its writers, its readers (or
+`unobserved`) and its source or the row it copies, every T row classifies
+its repeat and its pairs (or `unknown`) and every E row names its enforcer.
+Then run all four passes; a candidate becomes a finding only after
 [Check each finding](#check-each-finding).
 
 - **Nondeterminism in awaits, retries and event order.** For each queue,
