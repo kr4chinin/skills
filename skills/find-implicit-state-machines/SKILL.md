@@ -16,12 +16,12 @@ Stay read-only: don't edit code or create tickets unless asked.
 Use the scope the user gave. If the repository holds several apps and there is
 no hint, ask which one.
 
-Default to a defect audit: report the broken or fragile machines, also when
-asked to find all of them. Only an explicit request for an inventory (for
-example, "catalog all machines, including ones with no defect") adds a compact
-catalog with locations and review outcomes, including "no defect found" for
-fully traced machines without a finding. Suspected defects are still
-investigated and labelled as below.
+Default to a defect audit: report the broken or fragile machines. A request to
+find all the machines is still that audit. Only an explicit request for an
+inventory (for example, "catalog all machines, including ones with no defect")
+adds a compact catalog with locations and review outcomes, including "no
+defect found" for fully traced machines without a finding. Suspected defects
+are still investigated and labelled as below.
 
 In either mode, report what you included and skipped: distinguish discovery
 scope (where you searched), fully traced paths, and unreviewed candidates.
@@ -49,13 +49,14 @@ only one signal:
 - mutually exclusive UI elements, each with its own flag;
 - the same flow copied into several places.
 
-An existing enum, reducer or statechart does not rule out implicit
-coordination across components. A lone loading flag or ordinary
-framework-managed state without evidence of a failure or fragile coordination
-is still insufficient.
+Signal count or complexity alone is not a defect. An existing enum, reducer or
+statechart does not rule out implicit coordination across components. A lone
+loading flag or ordinary framework-managed state without evidence of a failure
+or fragile coordination is still insufficient.
 
-The search is done when every in-scope unit where two or more signals meet is
-either traced in step 3 or listed as an unreviewed candidate.
+The search is done when every in-scope candidate (a unit where two or more
+signals meet, or one signal with a concrete reachable failure) is either
+traced in step 3 or listed as an unreviewed candidate.
 
 On a large codebase, delegate read-only searches only when authorized,
 compatible with the user's constraints, and supported by available tools;
@@ -69,8 +70,9 @@ For suspected defects, each subagent returns compact leads: the intended
 invariant, state variables, complete event sequence with `path:line` for each
 step, protections checked, any unknown step, smallest fix, and scope limits.
 Ruled-out candidates come back separately with the protections that resolved
-them, without an invented failure or fix. Validate and deduplicate leads before
-selecting final findings; generate diagrams only after that selection.
+them, without an invented failure or fix. The parent validates and
+deduplicates leads before selecting final findings; generate diagrams only
+after that selection.
 
 ## 3. Reconstruct and verify
 
@@ -105,8 +107,9 @@ text:
 - **Confirmed**: you traced every step of the failing sequence in the code.
   A complete static trace is sufficient: the label neither requires nor
   implies runtime reproduction.
-- **Likely**: one step depends on runtime behaviour you could not confirm, or
-  on a check that was unavailable or unauthorized. Name that step.
+- **Likely**: the failing sequence depends on a step you could not verify:
+  runtime behaviour, a check that was unavailable or unauthorized, or code
+  you did not trace. Name that step.
 - **Smell**: works today, but only by convention, ordering or a guarantee
   elsewhere. Name it.
 
@@ -115,7 +118,8 @@ Report the evidence method separately from the label: `static trace`,
 all used). Say which tests you read and which you ran, and what each executed
 check exercises: a source-method call, an extracted method or a fake is no
 proof of broker, database, SDK, transport or deployment behaviour. Include
-runtime/version, command and artifact details only for checks actually run.
+runtime/version, command and artifact details only for checks actually run,
+and don't claim anything was run or reproduced unless you did it.
 
 Report impact/severity separately from both: what the user or caller observes
 (a stuck control, wrong data, a repeated side effect, lost work) and whether
@@ -131,10 +135,12 @@ Publish only when explicitly requested, into tasks or documents the user
 authorized creating or updating. Carry each finding's label, evidence method,
 impact/severity and caveats with its native Mermaid and source links pinned to
 the audited revision. Keep the Mermaid editable; substitute a PNG only on
-request. Publication is complete when the destination renders the diagrams
-with readable labels and contrast in both themes; saved source alone does not
-prove visibility. If a rendering check is unavailable, state which check
-remains unverified.
+request. Verify the saved source separately from rendering and visibility at
+the destination: publication is complete when the saved source carries all of
+that and the destination renders the diagrams with readable labels and
+contrast in both themes. Saved source alone does not prove visibility. If a
+rendering or destination check is unavailable, state which check remains
+unverified.
 
 Write in the user's language. Order findings Confirmed, then Likely, then
 Smell; within each group, user-facing flows first.
@@ -156,7 +162,8 @@ Smell; within each group, user-facing flows first.
 4. Smells, briefly naming the contract they rely on. Expand them or create
    follow-up tasks only when requested.
 5. In an inventory, the catalog: `path:line`, machine and review outcome.
-6. What was not covered, and how many candidates you dropped.
+6. What was not covered and, in a defect audit, how many candidates you
+   dropped.
 
 ### Diagram readability
 
@@ -196,9 +203,13 @@ Recommend the lightest change that removes the defect:
 
 For a queue, worker, lease or persisted workflow, the fix closes the failed
 item of the [distributed lifecycle checks](references/distributed-lifecycles.md):
-a conditional write/CAS guarded by current status, version or owner that
-checks affected rows, a transaction for changes that must commit together, or
-a persisted, idempotent retry, wakeup or reconciliation for interrupted work.
+
+- a conditional write/CAS guarded by current status, version or owner, checking
+  affected rows so stale completions cannot overwrite newer state;
+- a transaction for related persistence changes that must commit together;
+- persisted retries or wakeups and reconciliation for interrupted work,
+  preserving idempotency and using bounded batches that cover the full eligible
+  recovery scope without starving later records.
 
 A conditional write or a transaction stays the first fix. When the writers are
 too many or too scattered for one conditional write to cover, or the user asks
