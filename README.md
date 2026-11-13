@@ -1,5 +1,7 @@
 # skills
 
+[![skills.sh](https://skills.sh/b/kr4chinin/skills)](https://skills.sh/kr4chinin/skills)
+
 Agent skills for Claude Code, Codex, Cursor and other agents supported by the
 [`skills`](https://github.com/vercel-labs/skills) CLI.
 
