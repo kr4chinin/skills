@@ -1,6 +1,6 @@
 ---
 name: convert-state-machines-to-actors
-description: Convert a database-backed implicit state machine to an actor, the one owner every writer goes through. Use when asked to put all writers of persisted state behind one owner, to fix a race or lost update across several writers found by find-implicit-state-machines, or to convert several such machines one at a time.
+description: Convert a database-backed implicit state machine to an actor, the one owner every writer of the persisted state goes through. Use when asked to put writers behind one owner, or to fix a race or lost update across several writers, such as a find-implicit-state-machines finding.
 ---
 
 # Convert implicit state machines to actors
@@ -11,8 +11,9 @@ in memory; the database is the authority, so the actor holds across replicas
 and restarts.
 
 Input: findings from `find-implicit-state-machines`, a `path:line` or a
-ticket. Keep the finder's label: convert **Confirmed**; for **Likely**, step 2
-confirms; a **Smell** only on request. For several findings, see
+ticket. Keep the finder's label: convert **Confirmed**; convert **Likely**
+only after its step 2 test goes red, unless the user asked for one owner; a
+**Smell** only on request. For several findings, see
 [Several machines](#several-machines).
 
 One conditional write (`UPDATE ... WHERE status = :expected`, checking the
@@ -37,8 +38,8 @@ independent sessions on the production engine, major version, isolation level
 and pooling mode; mocks, in-memory fakes and a shared process lock prove
 nothing about replicas. Force the interleaving from the database: hold the
 row lock or key from a second connection, or, on a store that never blocks,
-put a barrier in the test between each writer's read and write. Hooks in code
-are for tests only.
+put a barrier in the test between each writer's read and write. A hook added
+to the code for that barrier is active in tests only.
 
 - **Red** on repeated runs: continue.
 - **Green** after the sessions really interleaved in the finding's order
@@ -66,9 +67,13 @@ service writes the table.
 | Writer | `path:line` | Guard today | After: actor, bypass (why) or out of band |
 | ------ | ----------- | ----------- | ----------------------------------------- |
 
-End with `writers outside this repository: unknown` unless the user named
-them; a local search proves nothing about other repositories. Done when every
-hit is classified.
+A **bypass** is a writer in this repository that stays outside the actor,
+listed with its reason. **Out of band** is a writer outside this repository,
+such as another service. End with `writers outside this repository: unknown`
+unless the user named them; a local search proves nothing about other
+repositories. Done when every hit is classified; if one conditional write
+then covers the runtime writers in this repository and the user did not ask
+for one owner, recommend it and stop.
 
 ## 4. Design the actor
 
@@ -79,12 +84,13 @@ hit is classified.
    is a persisted due time plus the existing scheduler, never a timer in
    memory.
 2. **Actor.** The only entry point. Per event: read the state and every guard
-   input, run the transition, and commit the new state, receipt and effects
-   as one atomic bundle the database accepts only if what was read still
-   holds. A rejected event changes no state and sends no effects; where its
-   key must keep its answer (a client idempotency key), record the rejection
-   as its receipt. A replay the current code answers with success still gets
-   that success. Logs and metrics go after commit.
+   input, run the transition, and commit the new state, the receipt (the
+   stored outcome of this event key) and the effects as one atomic bundle
+   the database accepts only if what was read still holds. A rejected event
+   changes no state and sends no effects; where its key must keep its answer
+   (a client idempotency key), record the rejection as its receipt. A replay
+   the current code answers with success still gets that success. Logs and
+   metrics go after commit.
 3. **Persistence.** Keeps every guarantee the write path has today: locks,
    versions, unique constraints, receipts, outbox.
 
@@ -94,11 +100,10 @@ applies.
 A call to another system cannot join the transaction. If its result must move
 the state, persist an awaiting state (`pending`, request id, parameters)
 first; the result is a second event. If delivery can wait, write it to an
-outbox in the same transaction; the relay ships in the same change and
-replaces the direct call in the same cutover. Contention retries cover only
-rolled-back transactions; an unknown outcome goes to a reconciler shipped
-with the change, never to a blind resend. Read
-[external effects](references/external-effects.md) for either path.
+outbox in the same transaction. An unknown outcome goes to a reconciler
+shipped with the change, never to a blind resend. Read
+[external effects](references/external-effects.md) before designing either
+path.
 
 Ask the user, with two to four options and a recommendation, before a schema
 change, a new error in a public API, an external call with an unknown outcome
@@ -107,8 +112,8 @@ writer that cannot go through the actor, or a store that cannot commit the
 bundle atomically.
 
 Done when each part names its table, guard and code location, each external
-call names its awaiting state and sender, and each departure has the user's
-answer.
+call names its awaiting state and sender, and each of those cases the design
+takes has the user's answer.
 
 ## 5. Write the scenario table
 
@@ -131,7 +136,7 @@ evidence.
   listed bypasses; any other bypass takes the same guard and commits the
   same receipt and effects.
 - Old binaries keep running during a rolling deploy: a new column stays
-  nullable and outside the guard until they are gone, and the first guard is
+  nullable and outside the guard until they are drained, and the first guard is
   a predicate they already store (usually the status). Until then they can
   still overwrite the actor's commit; if that window is not acceptable, ask
   whether to first guard the old paths or to drain them before the actor
@@ -160,13 +165,13 @@ commit and review to the project's usual workflow.
 
 ## Several machines
 
-Write a plan next to the finding report, or where the project keeps plans:
-`actor | writers that move | key check`, actors sharing a write path in
-sequence. Ask once whether to do all of them or a pilot. Convert one actor
-per change, each through steps 1 to 7 with its own red or baseline test.
-Local loops (quotas, rate limits, backoff, worker lifecycle) stay with their
-owners unless they write shared persisted state. Done when every finding has
-passed step 7 or has a stated reason.
+Write a plan next to the finding report, or where the project keeps plans,
+one row per actor: `actor | writers that move | red or baseline test`, with
+actors that share a write path in sequence. Ask once whether to do all of
+them or a pilot. Convert one actor per change, each through steps 1 to 7 with
+that test. Local loops (quotas, rate limits, backoff, worker lifecycle) stay
+with their owners unless they write shared persisted state. Done when every
+finding has passed step 7 or has a stated reason.
 
 ## Report
 
