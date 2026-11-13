@@ -19,8 +19,9 @@ Read when a transition calls another system.
 
 ## Outbox
 
-- Only the relay sends. The direct call goes in the same cutover, or the
-  effect goes out twice.
+- The relay (the worker that sends outbox rows) ships in the same change,
+  and only it sends. The direct call goes in the same cutover, or the effect
+  goes out twice.
 - Key each effect by entity, event key and a stable per-transition effect id
   or position: entities can share an event key, and one event can emit the
   same effect twice.
