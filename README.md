@@ -95,6 +95,9 @@ It works on its own and names
 [convert-state-machines-to-actors](#convert-state-machines-to-actors) where
 they go deeper; when one is not installed, it reports what was left out.
 
+Inspired by [this post](https://x.com/infinterenders/status/2119676620680339490)
+by render ([@infinterenders](https://x.com/infinterenders)).
+
 ## License
 
 MIT
