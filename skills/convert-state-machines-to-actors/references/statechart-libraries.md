@@ -2,9 +2,9 @@
 
 Read before using a statechart library the project already has. The
 transition stays pure, effects come back as data, and the actor acts on them;
-a library that runs effects only inside its own interpreter is replaced by a
-plain transition function. Check every API name against the installed
-version.
+if the library has no call that returns effects as data, use a plain
+transition function instead of its interpreter. Check every API name against
+the installed version.
 
 ## XState v5
 

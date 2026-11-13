@@ -12,8 +12,9 @@ and restarts.
 
 Input: findings from `find-implicit-state-machines`, a `path:line` or a
 ticket. Keep the finder's label: convert **Confirmed**; convert **Likely**
-only after its step 2 test goes red; a **Smell** only on request. For several
-findings, see [Several machines](#several-machines).
+only after its step 2 test goes red, unless the user asked for one owner; a
+**Smell** only on request. For several findings, see
+[Several machines](#several-machines).
 
 One conditional write (`UPDATE ... WHERE status = :expected`, checking the
 row count) is often the whole fix. Build an actor only when one conditional
@@ -66,12 +67,13 @@ service writes the table.
 | Writer | `path:line` | Guard today | After: actor, bypass (why) or out of band |
 | ------ | ----------- | ----------- | ----------------------------------------- |
 
-A **bypass** stays outside the actor, listed with its reason. **Out of band**
-is a writer this change cannot move, such as another service or a trigger.
-End with `writers outside this repository: unknown` unless the user named
-them; a local search proves nothing about other repositories. Done when every
-hit is classified; if one conditional write then covers every writer and the
-user did not ask for one owner, recommend it and stop.
+A **bypass** is a writer in this repository that stays outside the actor,
+listed with its reason. **Out of band** is a writer outside this repository,
+such as another service. End with `writers outside this repository: unknown`
+unless the user named them; a local search proves nothing about other
+repositories. Done when every hit is classified; if one conditional write
+then covers the runtime writers in this repository and the user did not ask
+for one owner, recommend it and stop.
 
 ## 4. Design the actor
 
@@ -110,8 +112,8 @@ writer that cannot go through the actor, or a store that cannot commit the
 bundle atomically.
 
 Done when each part names its table, guard and code location, each external
-call names its awaiting state and sender, and each question above has the
-user's answer.
+call names its awaiting state and sender, and each of those cases the design
+takes has the user's answer.
 
 ## 5. Write the scenario table
 
