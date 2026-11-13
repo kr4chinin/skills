@@ -62,6 +62,39 @@ writes. The race counts as fixed only when the database itself decides the
 losing session. For several machines it writes a plan and converts one actor
 per change.
 
+## recover-semantic-model
+
+Recovers a program's minimal semantic model before judging the code: the
+state that changes what the user sees, which transitions commute, repeat
+safely or depend on order, and what must be true before each effect fires.
+It then looks for nondeterminism in awaits, retries and event order,
+invariants nobody enforces, one fact stored in two places, and work that
+never reaches the screen.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/recover-semantic-model/diagram-dark.svg">
+  <img alt="In the code, a chunk handler stores an import's progress twice, as the imported rows and as a counter of them, and nothing says which step may repeat. The agent recovers the model, then reports a finding that names its rows and its smallest breaking input: chunk committed, crash before ack, chunk redelivered. The counter reads 200 for 100 rows, so the import is announced complete while lines are missing." src="assets/recover-semantic-model/diagram-light.svg">
+</picture>
+
+```sh
+npx skills add kr4chinin/skills --skill recover-semantic-model
+```
+
+> Recover my program's minimal semantic model.
+
+The audit is read-only. The model comes first, as three tables, and every
+finding names the rows it violates and the smallest input that breaks it: a
+numbered event sequence that becomes the regression test almost unchanged.
+Each fix says whether it is a bug fix, a behaviour change for the owner to
+decide or a contract needed from another system. Asked about refactors, it
+splits a diff into provably equivalent and "trust me" changes, each "trust
+me" with its smallest breaking input.
+
+It works on its own and names
+[find-implicit-state-machines](#find-implicit-state-machines) and
+[convert-state-machines-to-actors](#convert-state-machines-to-actors) where
+they go deeper; when one is not installed, it reports what was left out.
+
 ## License
 
 MIT
