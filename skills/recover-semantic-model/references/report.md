@@ -1,12 +1,12 @@
 # Report layout
 
-Read before writing the report. The layout comes first, then a worked
+Read before building the first table. The layout comes first, then a worked
 example.
 
 ## Rank
 
-Rank a finding by what the user sees when its breaking input runs. Count
-`unverified` steps as true; the steps-cited count carries the doubt.
+Rank a finding by what the user sees when its breaking input runs, as if
+every `unverified` step happens; the steps-cited count carries the doubt.
 Unstated intent does not lower the rank: it makes the fix a `behaviour
 change`.
 
@@ -23,7 +23,7 @@ change`.
 2. The model: the three tables, once per lifecycle if you built several.
 3. Findings. First an index numbered in rank order: number, title, group,
    rows, rank, steps cited, fix kind. Then the findings, grouped by the
-   model's lifecycles or owners so that each group is one batch to review
+   model's lifecycles or components so that each group is one batch to review
    and ship. Order groups by their highest-ranked finding, and findings
    inside a group so that each follows those it depends on. Rank 3 and 4
    get one line each unless asked. A rank 1 or 2 finding has:

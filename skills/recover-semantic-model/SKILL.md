@@ -1,20 +1,20 @@
 ---
 name: recover-semantic-model
-description: Recover a program's minimal semantic model (the state that changes what the user sees, how its transitions repeat and reorder, what each effect requires) and audit it for defects. Use when asked to recover or audit a semantic model, to check what is idempotent or order-dependent, or to split a refactor into provably equivalent and "trust me" changes.
+description: Recover a program's minimal semantic model (the state that changes what users see, which transitions are idempotent, commute or depend on order, what each effect requires). Use when asked to recover or audit that model, or to split a refactor into provably equivalent and "trust me" changes.
 ---
 
 # Recover the semantic model
 
 Recover the program's minimal semantic model: the smallest description of
 its state, transitions and dependencies that predicts what its users
-observe. Then find nondeterminism in awaits, retries and event order,
-invariants enforced by hope, one fact stored in two places, drifting, and
-work that never reaches the screen. Every finding points at a row of the
-model; one that names no row is ordinary code review.
+observe. Every finding points at a row of the model; one that names no row
+is ordinary code review.
 
-Stay read-only unless asked. By default build the three tables and run the
-four passes; split refactors when the request mentions them or names a diff.
-Asked for one part, do that part and the rows it needs.
+Stay read-only unless asked: no edits, tests or tickets. By default build
+the three tables and run the four passes; split refactors when the request
+mentions them or names a diff. Asked for one part, do that part and the rows
+it needs. Read the [report layout](references/report.md) before the first
+table: its worked example shows how full each cell should be.
 
 ## Scope and screen
 
@@ -26,8 +26,9 @@ program: what a UI renders; a service's responses, messages, records other
 programs read and money it moves; a library's returns, throws and callbacks.
 
 Number rows S1, T1, E1, one row per stored copy of a fact, not per
-variable. On a large scope, model one lifecycle or owner at a time, main
-flows first, and list the rest as not modelled.
+variable. On a large scope, model one lifecycle or component at a time (a
+job, a document, a family of consumers), main flows first, and list the rest
+as not modelled.
 
 ## 1. State: every value that changes what the user sees
 
@@ -60,8 +61,9 @@ behind each classification.
   `await`, or nothing). A lock excludes; it does not pick.
 
 Classify only pairs that can land in both orders and touch the same rows,
-the same reader or each other's preconditions. Write `unknown` rather than
-guess; it is a coverage gap, not a finding.
+the same reader or each other's preconditions; requests sent in order can
+still land out of order. Write `unknown` rather than guess; it is a coverage
+gap, not a finding.
 
 ## 3. Dependencies: what must be true before each effect fires
 
@@ -80,16 +82,20 @@ searched).
 
 ## Then find
 
-Each pass yields candidates until they pass
+The model is done when every S row names its writers and readers (or
+`unobserved`), every T row classifies its repeat and its pairs (or
+`unknown`) and every E row names its enforcer. Then run all four passes; a
+candidate becomes a finding only after
 [Check each finding](#check-each-finding).
 
 - **Nondeterminism in awaits, retries and event order.** For each queue,
   retry loop, webhook or scheduler, first state the intended delivery (at
   most or at least once, ordered or not, bounded or not) with the line that
-  shows it; if nothing says, ask the owner. A candidate is a repeat meeting
-  a cell that is not idempotent, two unordered events meeting a transition
-  that is not atomic, or an `await` between an enforcer's check and its
-  effect.
+  shows it; if nothing says, mark it `unstated`, list it under Decisions
+  for the owner and continue. A candidate is a repeat meeting a cell that
+  is not idempotent; two unordered events meeting a transition that is not
+  atomic, or a pair whose order nothing picks and one outcome is wrong; or
+  an `await` between an enforcer's check and its effect.
 - **Invariants enforced by hope.** A precondition whose enforcer is **none
   found**, reported with your search. **Elsewhere** is a contract: record
   what the user sees if it changes.
@@ -117,7 +123,8 @@ case, or two share a root cause. Before reporting one:
    try other routes to the same rows. If this program rejects them all, drop
    it as ruled out with the `path:line`; if only another system does, record
    the contract.
-4. **Merge by root cause**, and link findings whose fixes interact.
+4. **Merge by root cause**: inputs that break at the same row and step are
+   one finding with several symptoms. Link findings whose fixes interact.
 
 ### Smallest breaking input
 
@@ -156,9 +163,8 @@ that breaks is a finding, reported once, here.
 ## Report
 
 Write in the user's language, following the
-[report layout](references/report.md); read it before the first table. The
-report describes one revision: before implementing a finding, replay its
-input against the current code.
+[report layout](references/report.md). The report describes one revision:
+before implementing a finding, replay its input against the current code.
 
 ## Related skills
 
@@ -166,8 +172,9 @@ When one is not installed, don't reproduce its method: list the hand-off as
 not covered with the install command.
 
 - `find-implicit-state-machines`: reachable states of a lifecycle row, and
-  queue, worker, lease and workflow lifecycles beyond this model. Keep this
-  report's layout.
+  ownership, persistence and recovery of queues, workers, leases and
+  workflows; their delivery, idempotency and effect preconditions stay in
+  this model. Keep this report's layout.
   `npx skills add kr4chinin/skills --skill find-implicit-state-machines`
 - `convert-state-machines-to-actors`: the fix when several writers of one
   persisted state must go behind one owner. It edits code: run it only when
