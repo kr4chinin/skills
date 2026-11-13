@@ -1,32 +1,32 @@
 ---
 name: find-implicit-state-machines
-description: Find implicit state machines in a codebase (state spread across flags, status fields, timers and callbacks), audit for defects, or catalog identified machines when explicitly asked for an inventory. Use when asked to find implicit state machines or audit for impossible states, stuck loading, missing resets or async races.
+description: Audit a codebase for implicit state machines (state spread across flags, status fields, timers and callbacks). Use when asked to find them or to trace impossible states, stuck loading, missing resets or async races. Catalog machines with no defect only when asked for an inventory.
 ---
 
 # Find implicit state machines
 
 An implicit state machine has states and transitions that are not declared in
-one place but spread across variables, handlers, callbacks and timers. Find
-and reconstruct them to audit for defects or build an explicitly requested
-inventory. Finding a machine does not mean finding a bug.
+one place but spread across variables, handlers, callbacks and timers.
+Finding a machine does not mean finding a bug.
 
 Stay read-only: don't edit code or create tickets unless asked.
 
 ## 1. Scope
 
 Use the scope the user gave. If the repository holds several apps and there is
-no hint, ask which one. Report what you included and skipped.
+no hint, ask which one.
 
-Default to a defect audit: report the broken or fragile machines. When the user
-explicitly requests an inventory (for example, "catalog all machines, including
-ones with no defect"), include a compact catalog with locations and review outcomes,
-including "no defect found" for fully traced machines without a finding. Retain
-these in the catalog even when dropped from defect findings. Continue
-investigating suspected defects and use the evidence labels below for findings.
+Default to a defect audit: report the broken or fragile machines, also when
+asked to find all of them. Only an explicit request for an inventory (for
+example, "catalog all machines, including ones with no defect") adds a compact
+catalog with locations and review outcomes, including "no defect found" for
+fully traced machines without a finding. Suspected defects are still
+investigated and labelled as below.
 
-In either mode, distinguish discovery scope (where you searched), fully traced
-paths, and unreviewed candidates. State coverage gaps; search hits and file
-counts do not establish exhaustive coverage.
+In either mode, report what you included and skipped: distinguish discovery
+scope (where you searched), fully traced paths, and unreviewed candidates.
+State coverage gaps; search hits and file counts do not establish exhaustive
+coverage.
 
 ## 2. Find candidates
 
@@ -49,25 +49,28 @@ only one signal:
 - mutually exclusive UI elements, each with its own flag;
 - the same flow copied into several places.
 
-Signal count or complexity alone is not a defect. An existing enum, reducer or
-statechart does not rule out implicit coordination across components. A lone
-loading flag or ordinary framework-managed state without evidence of a failure
-or fragile coordination is still insufficient.
+An existing enum, reducer or statechart does not rule out implicit
+coordination across components. A lone loading flag or ordinary
+framework-managed state without evidence of a failure or fragile coordination
+is still insufficient.
+
+The search is done when every in-scope unit where two or more signals meet is
+either traced in step 3 or listed as an unreviewed candidate.
 
 On a large codebase, delegate read-only searches only when authorized,
 compatible with the user's constraints, and supported by available tools;
 otherwise do the audit yourself. Split bounded, disjoint scopes by domain or
-lifecycle. Assign shared code an explicit owner and identify cross-scope
+lifecycle. Assign shared code to one subagent and identify cross-scope
 handoffs so complete paths can be traced. Give each subagent its scope, relevant
 candidate heuristics and verification requirements, including applicable
 references; no recursive delegation unless the user explicitly requests it.
 
-For suspected defects, ask for compact leads: the intended invariant, state
-variables, complete event sequence with `path:line` for each step, protections
-checked, any unknown step, smallest fix, and scope limits. Return ruled-out
-candidates separately with the protections that resolved them, without inventing
-a failure or fix. The parent validates and deduplicates leads before selecting
-final findings; generate diagrams only after that selection.
+For suspected defects, each subagent returns compact leads: the intended
+invariant, state variables, complete event sequence with `path:line` for each
+step, protections checked, any unknown step, smallest fix, and scope limits.
+Ruled-out candidates come back separately with the protections that resolved
+them, without an invented failure or fix. Validate and deduplicate leads before
+selecting final findings; generate diagrams only after that selection.
 
 ## 3. Reconstruct and verify
 
@@ -94,44 +97,44 @@ repository's documentation policy.
 
 If uncertainty remains, choose the smallest meaningful execution within the
 audit's authorized scope, preferring local isolated checks. This skill grants
-no access to production or other shared systems. If a check is unavailable or
-unauthorized, keep the finding Likely and name the unresolved step. A complete
-static trace needs no runtime reproduction. Distinguish tests read from tests
-run, and state what an executed check actually exercises: a source-method call
-or fake alone is not broker, database or SDK proof.
+no access to production or other shared systems.
 
 Label each finding by the code trace; state any doubt about user impact in the
 text:
 
 - **Confirmed**: you traced every step of the failing sequence in the code.
-  A complete static trace is sufficient; it does not imply runtime reproduction
-  or require integration or production execution.
-- **Likely**: one step depends on runtime behaviour you could not confirm. Name
-  that step.
+  A complete static trace is sufficient: the label neither requires nor
+  implies runtime reproduction.
+- **Likely**: one step depends on runtime behaviour you could not confirm, or
+  on a check that was unavailable or unauthorized. Name that step.
 - **Smell**: works today, but only by convention, ordering or a guarantee
   elsewhere. Name it.
 
-Report evidence method separately: `static trace`, `isolated execution`,
-`integration execution` or `production evidence` (list all used). Report
-impact/severity separately from confidence and evidence method.
-
-Isolated execution of extracted methods or fakes does not validate SDK,
-transport or deployment assumptions. Keep a finding Likely when its failing
-sequence depends on an unverified step, and name that step. Include
+Report the evidence method separately from the label: `static trace`,
+`isolated execution`, `integration execution` or `production evidence` (list
+all used). Say which tests you read and which you ran, and what each executed
+check exercises: a source-method call, an extracted method or a fake is no
+proof of broker, database, SDK, transport or deployment behaviour. Include
 runtime/version, command and artifact details only for checks actually run.
 
-Drop candidates that turn out to be fine, and report how many you dropped. Don't claim anything was run or
-reproduced unless you did it.
+Report impact/severity separately from both: what the user or caller observes
+(a stuck control, wrong data, a repeated side effect, lost work) and whether
+normal use reaches it. Use a severity scale only if the project has one.
+
+In a defect audit, drop candidates that turn out to be fine and report how
+many you dropped. In an inventory, keep them in the catalog as "no defect
+found", with the protection that cleared them.
 
 ## 4. Report
 
-When asked to publish findings, preserve their confidence, evidence method,
-impact/severity and caveats alongside the matching native Mermaid and source
-links pinned to the audited revision. Transfer them only into tasks or documents
-the user authorized creating or updating. Verify saved source
-separately from rendering and visibility at the destination. If renderer or
-destination verification is unavailable, state that limit; do not substitute
-PNG unless requested.
+Publish only when explicitly requested, into tasks or documents the user
+authorized creating or updating. Carry each finding's label, evidence method,
+impact/severity and caveats with its native Mermaid and source links pinned to
+the audited revision. Keep the Mermaid editable; substitute a PNG only on
+request. Publication is complete when the destination renders the diagrams
+with readable labels and contrast in both themes; saved source alone does not
+prove visibility. If a rendering check is unavailable, state which check
+remains unverified.
 
 Write in the user's language. Order findings Confirmed, then Likely, then
 Smell; within each group, user-facing flows first.
@@ -146,15 +149,16 @@ Smell; within each group, user-facing flows first.
      with `path:line` for each step and any unconfirmed runtime step named;
    - a Mermaid `stateDiagram-v2` of the actual behaviour with the bad state
      marked by a `classDef`; for a timing race, a `sequenceDiagram` instead;
-   - the smallest fix, and a regression test that replays the sequence.
+   - the smallest fix; describe the regression test that replays the sequence.
 3. Group findings that share a cause and fix, regardless of copy count. Explain
    one representative in full and list every affected location with any
    meaningful differences; do not hide distinct failure sequences in a group.
 4. Smells, briefly naming the contract they rely on. Expand them or create
    follow-up tasks only when requested.
-5. What was not covered.
+5. In an inventory, the catalog: `path:line`, machine and review outcome.
+6. What was not covered, and how many candidates you dropped.
 
-### Diagram readability and publishing
+### Diagram readability
 
 Use native Mermaid blocks, keep diagrams under about 12 states, and match the
 state names in the text. For example, a stale response that leaves loading set:
@@ -176,12 +180,6 @@ states, notes and sequence regions. Pair every custom fill with an explicit
 contrasting text colour. Use translucent sequence highlights so the theme's text
 stays readable on its background.
 
-Publish only when explicitly requested. Preserve editable Mermaid; do not
-replace it with PNG unless requested. Verify that diagrams render in the
-destination with readable labels and contrast in both themes before claiming
-publication complete. Saved source alone does not prove visibility. If a
-rendering check is unavailable, state which check remains unverified.
-
 ## Fixes
 
 Recommend the lightest change that removes the defect:
@@ -189,24 +187,22 @@ Recommend the lightest change that removes the defect:
 - one tagged union or enum instead of parallel flags;
 - one transition function when transitions are scattered;
 - a statechart library only for hierarchy, parallel regions or timers;
-- a request id, generation counter or cancellation for races;
+- a request id, generation counter or cancellation for an in-process race;
 - one owner per loop, with an attempt limit and a terminal error state,
   stopped on teardown;
 - re-creating the unit instead of resetting its fields when its identity
   changes;
 - one shared module for copied flows.
 
-For distributed persistence defects, consider:
-
-- conditional writes/CAS guarded by current status, version or owner, checking
-  affected rows so stale completions cannot overwrite newer state;
-- transactions for related persistence changes that must commit together;
-- persisted retries or wakeups and reconciliation for interrupted work,
-  preserving idempotency and using bounded batches that cover the full eligible
-  recovery scope without starving later records.
+For a queue, worker, lease or persisted workflow, the fix closes the failed
+item of the [distributed lifecycle checks](references/distributed-lifecycles.md):
+a conditional write/CAS guarded by current status, version or owner that
+checks affected rows, a transaction for changes that must commit together, or
+a persisted, idempotent retry, wakeup or reconciliation for interrupted work.
 
 A conditional write or a transaction stays the first fix. When the writers are
 too many or too scattered for one conditional write to cover, or the user asks
-to put every writer behind one owner, use the `convert-state-machines-to-actors`
-skill. If it is not installed, recommend it to the user (`npx skills add
-kr4chinin/skills --skill convert-state-machines-to-actors`) instead.
+to put every writer behind one owner, recommend the
+`convert-state-machines-to-actors` skill; it edits code, so run it only when
+asked. If it is not installed, give the install command (`npx skills add
+kr4chinin/skills --skill convert-state-machines-to-actors`).
