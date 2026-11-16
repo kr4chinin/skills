@@ -108,6 +108,11 @@ so a comment that excuses a temporary workaround teaches them that workarounds
 are fine; the comments that remain should each explain something the code
 cannot, such as a browser quirk.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/prune-comments/diagram-dark.svg">
+  <img alt="In the code, each comment gets a verdict: a comment that restates the next line and a commented-out call are Delete, a HACK comment excusing sleep(2000) is Refactor, and a Safari 16 quirk and a @ts-expect-error directive are Keep. The agent's plan lists the workaround first, with what happens to its code (poll until created) and its comment (delete), then deletion counts by pattern and the patterns it keeps. Nothing changes until the plan is approved." src="assets/prune-comments/diagram-light.svg">
+</picture>
+
 ```sh
 npx skills add kr4chinin/skills --skill prune-comments
 ```
