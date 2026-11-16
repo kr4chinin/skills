@@ -8,56 +8,23 @@
 <rect x="40" y="140" width="540" height="460" rx="16" fill="#161b22" stroke="#30363d"/>
 <rect x="640" y="140" width="600" height="460" rx="16" fill="#161b22" stroke="#30363d"/>
 <path d="M596 370 L624 370" stroke="#9198a1" stroke-width="2" marker-end="url(#arrow)"/>
-<text x="76" y="186" font-size="18" font-weight="600" fill="#e6edf3">In the code</text>
-<text x="76" y="222" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#9198a1">what the next agent will copy</text>
-<rect x="76" y="242" width="468" height="272" rx="10" fill="#0d1117" stroke="#30363d"/>
-<text x="96" y="272" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#ffa198">// increment the retry count</text>
-<rect x="452" y="256" width="80" height="22" rx="11" fill="#3a1418" stroke="#f85149" stroke-width="1.5"/>
-<text x="492" y="272" text-anchor="middle" font-size="12" font-weight="600" fill="#ffa198">Delete</text>
-<text x="96" y="300" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#e6edf3">retries++</text>
-<rect x="84" y="309" width="452" height="28" rx="6" fill="#2e2610"/>
-<text x="96" y="328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#e3b341">// HACK: API races on create, wait</text>
-<rect x="452" y="312" width="80" height="22" rx="11" fill="#2e2610" stroke="#d29922" stroke-width="1.5"/>
-<text x="492" y="328" text-anchor="middle" font-size="12" font-weight="600" fill="#e3b341">Refactor</text>
-<text x="96" y="356" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#e6edf3">await sleep(2000)</text>
-<text x="96" y="384" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#7ee787">// Safari 16 ignores passive: true</text>
-<rect x="452" y="368" width="80" height="22" rx="11" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
-<text x="492" y="384" text-anchor="middle" font-size="12" font-weight="600" fill="#7ee787">Keep</text>
-<text x="96" y="412" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#e6edf3">el.addEventListener("wheel", h, opts)</text>
-<text x="96" y="440" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#7ee787">// @ts-expect-error: lib types lag v5</text>
-<rect x="452" y="424" width="80" height="22" rx="11" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
-<text x="492" y="440" text-anchor="middle" font-size="12" font-weight="600" fill="#7ee787">Keep</text>
-<text x="96" y="468" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#e6edf3">parse(raw, { strict: true })</text>
-<text x="96" y="496" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" fill="#ffa198">// const old = legacyParse(raw)</text>
-<rect x="452" y="480" width="80" height="22" rx="11" fill="#3a1418" stroke="#f85149" stroke-width="1.5"/>
-<text x="492" y="496" text-anchor="middle" font-size="12" font-weight="600" fill="#ffa198">Delete</text>
-<text x="76" y="560" font-size="15" fill="#9198a1">One HACK tells the next agent that hacks are fine here.</text>
-<text x="676" y="186" font-size="18" font-weight="600" fill="#e6edf3">What the agent plans</text>
-<rect x="676" y="206" width="528" height="118" rx="10" fill="#2e2610" stroke="#d29922" stroke-width="2"/>
-<text x="696" y="234" font-size="15" font-weight="600" fill="#e3b341">Workarounds</text>
-<text x="1184" y="234" text-anchor="end" font-size="12" fill="#e3b341">fix the cause or delete it</text>
-<text x="696" y="262" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#e6edf3">upload.ts:42</text>
-<text x="814" y="262" font-size="13" fill="#e6edf3">sleep(2000) hides a race on create</text>
-<rect x="696" y="278" width="212" height="30" rx="15" fill="#0d1117" stroke="#d29922" stroke-width="1.5"/>
-<text x="802" y="298" text-anchor="middle" font-size="13" font-weight="600" fill="#e3b341">code → poll until created</text>
-<rect x="920" y="278" width="140" height="30" rx="15" fill="#0d1117" stroke="#d29922" stroke-width="1.5"/>
-<text x="990" y="298" text-anchor="middle" font-size="13" font-weight="600" fill="#e3b341">comment → delete</text>
-<rect x="1072" y="278" width="112" height="30" rx="15" fill="#0d1117" stroke="#d29922" stroke-width="1.5"/>
-<text x="1128" y="298" text-anchor="middle" font-size="13" font-weight="600" fill="#e3b341">effort S</text>
-<rect x="676" y="338" width="528" height="88" rx="10" fill="#3a1418" stroke="#f85149" stroke-width="2"/>
-<text x="696" y="364" font-size="15" font-weight="600" fill="#ffa198">Delete</text>
-<text x="1184" y="364" text-anchor="end" font-size="12" fill="#ffa198">removing it loses nothing</text>
-<text x="696" y="389" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#ffa198">restated code</text>
-<text x="1184" y="389" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#ffa198">38</text>
-<text x="696" y="413" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#ffa198">commented-out code</text>
-<text x="1184" y="413" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#ffa198">12</text>
-<rect x="676" y="440" width="528" height="88" rx="10" fill="#12261e" stroke="#3fb950" stroke-width="2"/>
-<text x="696" y="466" font-size="15" font-weight="600" fill="#7ee787">Keep</text>
-<text x="1184" y="466" text-anchor="end" font-size="12" fill="#7ee787">says what the code cannot</text>
-<text x="696" y="491" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#7ee787">Safari 16 quirk</text>
-<text x="1184" y="491" text-anchor="end" font-size="13" fill="#7ee787">external cause, versioned</text>
-<text x="696" y="515" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#7ee787">@ts-expect-error</text>
-<text x="1184" y="515" text-anchor="end" font-size="13" fill="#7ee787">a tool reads it</text>
-<text x="676" y="560" font-size="15" fill="#9198a1">Nothing changes until you approve the plan.</text>
+<text x="76" y="196" font-size="18" font-weight="600" fill="#9198a1">Before</text>
+<text x="676" y="196" font-size="18" font-weight="600" fill="#9198a1">After</text>
+<text x="76" y="261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#ffa198">// increment the retry count</text>
+<rect x="452" y="242" width="96" height="28" rx="14" fill="#3a1418" stroke="#f85149" stroke-width="1.5"/>
+<text x="500" y="261" text-anchor="middle" font-size="14" font-weight="600" fill="#ffa198">Delete</text>
+<text x="76" y="307" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e6edf3">retries++</text>
+<text x="76" y="353" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e3b341">// HACK: API races on create</text>
+<rect x="452" y="334" width="96" height="28" rx="14" fill="#2e2610" stroke="#d29922" stroke-width="1.5"/>
+<text x="500" y="353" text-anchor="middle" font-size="14" font-weight="600" fill="#e3b341">Refactor</text>
+<text x="76" y="399" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e6edf3">await sleep(2000)</text>
+<text x="76" y="445" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#7ee787">// Safari 16 ignores passive</text>
+<rect x="452" y="426" width="96" height="28" rx="14" fill="#12261e" stroke="#3fb950" stroke-width="1.5"/>
+<text x="500" y="445" text-anchor="middle" font-size="14" font-weight="600" fill="#7ee787">Keep</text>
+<text x="76" y="491" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e6edf3">el.addEventListener("wheel", h)</text>
+<text x="676" y="307" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e6edf3">retries++</text>
+<text x="676" y="353" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e3b341">await waitUntilCreated(id)</text>
+<text x="676" y="399" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#7ee787">// Safari 16 ignores passive</text>
+<text x="676" y="445" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#e6edf3">el.addEventListener("wheel", h)</text>
 </g>
 </svg>

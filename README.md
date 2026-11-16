@@ -110,7 +110,7 @@ cannot, such as a browser quirk.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/prune-comments/diagram-dark.svg">
-  <img alt="In the code, each comment gets a verdict: a comment that restates the next line and a commented-out call are Delete, a HACK comment excusing sleep(2000) is Refactor, and a Safari 16 quirk and a @ts-expect-error directive are Keep. The agent's plan lists the workaround first, with what happens to its code (poll until created) and its comment (delete), then deletion counts by pattern and the patterns it keeps. Nothing changes until the plan is approved." src="assets/prune-comments/diagram-light.svg">
+  <img alt="Before: a comment restating retries++ is marked Delete, a HACK comment above sleep(2000) is marked Refactor, and a Safari 16 quirk is marked Keep. After: retries++ has no comment, sleep(2000) is replaced by waitUntilCreated(id), and only the Safari comment remains." src="assets/prune-comments/diagram-light.svg">
 </picture>
 
 ```sh
