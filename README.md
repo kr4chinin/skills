@@ -100,6 +100,33 @@ they go deeper; when one is not installed, it reports what was left out.
 Inspired by [this post](https://x.com/infinterenders/status/2119676620680339490)
 by render ([@infinterenders](https://x.com/infinterenders)).
 
+## prune-comments
+
+Audits the code comments in a repository and plans which to delete, keep,
+rewrite or replace with a refactor. Agents copy what a codebase already does,
+so a comment that excuses a temporary workaround teaches them that workarounds
+are fine; the comments that remain should each explain something the code
+cannot, such as a browser quirk.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/prune-comments/diagram-dark.svg">
+  <img alt="Before: a comment restating retries++ is marked Delete, a HACK comment above sleep(2000) is marked Refactor, and a Safari 16 quirk is marked Keep. After: retries++ has no comment, sleep(2000) is replaced by waitUntilCreated(id), and only the Safari comment remains." src="assets/prune-comments/diagram-light.svg">
+</picture>
+
+```sh
+npx skills add kr4chinin/skills --skill prune-comments
+```
+
+> Identify the useless code comments we can prune in my repo.
+
+The first pass is read-only and ends with a plan. Each workaround gets one
+row: fix the root cause, delete it because its cause is gone on every
+supported version, or keep it with the cause named. Then come the other
+refactors, deletions by pattern, rewrites and the comments worth keeping,
+including every comment a tool reads. It applies the plan only when asked,
+checking each batch against a baseline run, and offers a comment rule for
+`AGENTS.md` or `CLAUDE.md` so the codebase stays pruned.
+
 ## License
 
 MIT
