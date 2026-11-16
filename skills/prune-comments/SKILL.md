@@ -16,7 +16,8 @@ The first deliverable is a plan. Edit code only after the user approves it.
 ## 1. Scope
 
 Use the scope the user gave; with several apps and no hint, ask which. Cover
-files tracked by git, and report the revision you read. Leave out generated,
+files tracked by git and any untracked file the user names, marked as
+untracked, and report the revision you read. Leave out generated,
 vendored and third-party code, lockfiles, snapshots and test fixtures, and
 say what you left out.
 
@@ -125,7 +126,9 @@ Then ask which parts to apply.
 Before the first batch, run the checks once as the baseline: formatter in
 check mode, linter, type check, tests, and the tools from step 1 that read
 the comments being removed (build, docs build, coverage, i18n extraction,
-codegen). Confirm each approved item still points at the same comment; a
+codegen). With uncommitted changes in the tree, run the tools that write
+files (build, codegen, i18n extraction) in a separate worktree, or ask
+first. Confirm each approved item still points at the same comment; a
 moved one goes back to unreviewed. Leave files with the user's uncommitted
 changes untouched, and commit only when the user or the project's workflow
 asks for it.
@@ -134,12 +137,15 @@ Order: comment deletions one pattern per batch, then rewrites, then each
 refactor and each removal of workaround code as its own change with a test
 for the case it handled.
 
-After each batch, rerun the checks and compare with the baseline. Any
-difference, including a check that now passes, means something read a
-removed comment: narrow the batch down to that comment and restore it.
+After each batch, rerun the checks and compare with the baseline. After a
+deletion or rewrite batch, any difference, including a check that now
+passes, means something read a removed comment: narrow the batch down to
+that comment and restore it. A refactor or workaround change should pass
+its own new test; any other difference is a regression to fix or revert.
 
-Done when every approved item is applied or skipped with a reason and every
-batch matches its baseline; report the checks you could not run.
+Done when every approved item is applied or skipped with a reason and no
+check differs from the baseline except the intended ones; report the checks
+you could not run.
 
 ## 5. Keep it pruned
 
