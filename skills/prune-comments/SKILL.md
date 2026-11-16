@@ -1,6 +1,6 @@
 ---
 name: prune-comments
-description: Audit code comments and plan which to delete, keep, rewrite or replace with a refactor. Use when asked to prune or clean up comments, or to find workaround and hack comments worth fixing at the root.
+description: Audit code comments and plan which to delete, keep, rewrite or replace with a refactor. Use when asked to prune a codebase's comments, or to sort workaround comments into root-cause fixes and safe deletions.
 ---
 
 # Prune comments
@@ -8,8 +8,8 @@ description: Audit code comments and plan which to delete, keep, rewrite or repl
 Agents copy what a codebase already does, so every comment is a _precedent_.
 A comment that narrates the code teaches narration; one that excuses a
 temporary workaround teaches that workarounds are fine here. Prune until the
-comments that remain are precedents worth copying: each states a _why_ the
-code cannot express.
+comments that remain are precedents worth copying: each says what the code
+cannot.
 
 The first deliverable is a plan. Edit code only after the user approves it.
 
@@ -17,110 +17,139 @@ The first deliverable is a plan. Edit code only after the user approves it.
 
 Use the scope the user gave; with several apps and no hint, ask which. Cover
 files tracked by git, and report the revision you read. Leave out generated,
-vendored and third-party code, lockfiles and snapshots, and say what you left
-out.
+vendored and third-party code, lockfiles, snapshots and test fixtures, and
+say what you left out.
 
-Find comments with a syntax-aware tool (`ast-grep` with `kind: comment`, or
-the language's parser) when one is available: text search also matches `//`
-and `#` inside strings and URLs. Doc comments and docstrings count as
-comments.
+Read the repository's own comment rules (`AGENTS.md`, CONTRIBUTING, lint
+config that requires doc comments). They override this skill. Then list the
+tools that read comments here: linters, type checkers, bundler, coverage,
+test runner, codegen, migrations, i18n extraction, docs build.
+
+Find comments with a parser: `ast-grep` with `kind: comment`, or the
+language's own. `kind: comment` misses docstrings (string nodes in Python)
+and doc attributes (`#[doc]`, `@doc`); query those too. List a file with no
+parser for its language as unparsed: text search also matches `#` and `//`
+in strings, URLs and `${#arr}`.
+
+Done when every in-scope file is parsed or listed as unparsed.
 
 ## 2. Classify every comment
 
-Give each comment one verdict. Judge it against the code beside it, the
-history of those lines (`git log -L`, `git blame`) and any linked issue: the
-code changes since the comment was written show whether it is stale.
+Give each comment one verdict. Judge it against the code it constrains, the
+history of those lines (`git log -L`, `git blame`) and any linked issue.
+When several verdicts fit, the first in this order wins: Keep, Rewrite,
+Refactor, Delete. Judge a block claim by claim: a comment with one narrating
+line and one constraint is a Rewrite.
 
-**Keep**: the comment carries information the code cannot.
+**Keep**: the comment says what the code cannot, or a tool reads it.
 
-- An external quirk: browser, OS, runtime, library or API behaviour, ideally
-  with a link or version.
-- A constraint or invariant that is not obvious, with what breaks without it:
-  ordering, concurrency, security, a performance budget, a protocol rule.
+- An external quirk: browser, OS, runtime, library or API behaviour, with a
+  link or version.
+- A constraint (ordering, concurrency, security, performance, protocol) and
+  what breaks without it.
 - Why the obvious alternative was rejected.
-- Public API docs read outside the file, and docstrings that hold doctests.
-- Comments the tooling reads: lint and type suppressions, formatter pragmas,
-  build tags, `// @ts-check`, `/// <reference>`, `# type:`, shebangs, license
-  headers, generated-file markers. A suppression without a reason also gets a
-  Rewrite that adds one.
+- API docs that another file, an editor or a doc site reads: parameters,
+  results, errors, `@deprecated`, doctests. They say _what_ by design.
+- A comment a tool reads, in the form that tool requires: suppressions,
+  pragmas and directives (`//go:`, `# frozen_string_literal:`, `@__PURE__`,
+  `webpackChunkName`, SQL hints), migration and coverage markers, translator
+  notes, shebangs, license and SPDX headers, generated-file markers. A
+  comment shaped like a directive whose reader you cannot name is Keep.
+- The only body of a block: an empty `catch`, `else` or stub.
+- Commented examples and disabled options in config files, templates and
+  `.env.example`: they document that file.
+- A TODO or FIXME that cites a ticket, or names a defect that is still real.
+  The plan lists a ticket to file for the latter.
 
-**Delete**: removing it loses nothing.
+**Rewrite**: the comment should exist but is vague or wrong. Give the
+replacement text. On API docs, correct the claim and keep the contract. A
+suppression without a reason gets one in the tool's own syntax
+(`// eslint-disable-next-line rule -- reason`). When comment and code
+disagree, first check whether the code regressed; a regression is a ticket.
+
+**Refactor**: the code can carry the comment's whole content, through a name,
+an extracted function, a named constant, or a type for "may be null" and
+"call init first". The comment goes in the same change. Renaming an
+exported, serialised or reflected name, replacing a runtime check with a
+type, or extracting a block that moves `return`, `break` or `this` changes
+behaviour; the plan marks it.
+
+**Delete**: nothing above fits, and removing it loses nothing.
 
 - It restates the code or narrates the next line.
-- Commented-out code; git keeps it.
-- Change history, authorship, dates, "added for X".
+- Commented-out code from a live path; git keeps it.
+- Change history and authorship that give no reason.
 - Section banners in a file short enough to read whole.
-- It describes code that no longer exists or now behaves differently.
-- A workaround whose cause is gone: the upstream bug is fixed in the
-  installed version, or the code it guarded was removed. The workaround code
-  goes with the comment; confirm the fix against the installed version first.
-- A TODO or FIXME with no owner, ticket or still-true reason. If it names a
-  real defect, list it in the plan as a ticket to file.
+- A TODO or FIXME whose reason is gone.
 
-**Refactor**: the comment compensates for code that should say it itself. The
-fix is a code change, and the comment goes in the same change.
+### Workarounds
 
-- A comment explaining a variable or function → a better name.
-- A comment labelling a block → an extracted, named function.
-- A comment explaining a literal → a named constant.
-- "May be null", "only one of these is set", "call init first" → types, a
-  tagged union, a constructor.
-- A hack or temporary workaround for this repository's own code → fix the
-  root cause.
+Decide each workaround or hack comment together with the code it excuses:
 
-A workaround for an external cause the repository cannot change is Keep; make
-sure its comment names the cause.
+- **Cause in this repository**: Refactor to fix the root cause. If that fix
+  is too large, the code stays and the comment is rewritten to name the
+  cause and a ticket.
+- **External cause, present on any version the project supports**: Keep, and
+  make the comment name the cause.
+- **External cause gone on every supported version**: delete the code and
+  the comment. Check the supported range (lockfile, `engines`, browserslist,
+  CI matrix), not the copy installed here. A check that still enforces a
+  security or protocol rule stays, with a comment that states the rule.
 
-**Rewrite**: the comment should exist but is vague, wrong, or says what
-instead of why. Give the replacement text.
-
-Done when every comment in scope has a verdict or is listed as unreviewed
-with the reason. On a large codebase, classify the mechanical classes
-(commented-out code, banners, restated code) by pattern with counts and
-sample them, and read individually every comment that needs judgement:
-workarounds, TODOs, anything near a Keep signal.
+Done when every comment found in step 1 has a verdict or is listed as
+unreviewed with the reason. On a large codebase, use patterns and samples to
+find and count candidates, and still read each Delete in its context. Check
+history for workarounds, TODOs and comments that look stale. Report sampled
+estimates apart from reviewed counts.
 
 ## 3. Plan
 
 Write in the user's language:
 
-1. Summary: counts per verdict, per area.
-2. Refactor, workarounds and hacks first, since they are the precedents agents
-   copy most: `path:line`, the comment, what it compensates for, the proposed
-   change, effort (S/M/L), risk and the check that will prove it safe. Group
-   items that share one fix.
-3. Delete, grouped by pattern: count, two or three examples, and whether the
-   removal is mechanical. List workaround code that goes with its comment
-   separately, as a behaviour change.
-4. Rewrite: `path:line`, current text, replacement.
-5. Keep: the patterns kept and why, with an example each.
-6. Tickets to file, and what was not covered.
+1. Summary: reviewed counts per verdict and area, estimates marked as such,
+   and what was not covered.
+2. Workarounds, as a table: `path:line`, cause, what happens to the code
+   (delete / refactor / keep), to the comment (delete / rewrite / keep),
+   effort (S/M/L), behaviour change, and the check that proves it safe.
+   Group items that share one fix.
+3. Other refactors, with the same fields.
+4. Delete, grouped by pattern: count and two or three examples.
+5. Rewrite: `path:line`, current text, replacement.
+6. Keep: the patterns kept and why, with an example each.
+7. Tickets to file.
 
 Then ask which parts to apply.
 
 ## 4. Apply, when asked
 
-Order: deletions, then rewrites, then refactors.
+Before the first batch, run the checks once as the baseline: formatter in
+check mode, linter, type check, tests, and the tools from step 1 that read
+the comments being removed (build, docs build, coverage, i18n extraction,
+codegen). Confirm each approved item still points at the same comment; a
+moved one goes back to unreviewed. Leave files with the user's uncommitted
+changes untouched, and commit only when the user or the project's workflow
+asks for it.
 
-- Deletions go one pattern per commit and touch comments only. Removing a
-  workaround is its own change, with a test for the case it handled.
-- Each refactor is its own change and deletes its comment.
-- After each batch, run the project's formatter, linter, type check and
-  tests. A comment-only change that alters any result removed something the
-  tooling reads (a suppression, a docstring that was a function's only body,
-  a doctest); restore it.
+Order: comment deletions one pattern per batch, then rewrites, then each
+refactor and each removal of workaround code as its own change with a test
+for the case it handled.
 
-Done when every check is as green as before the batch; report what the checks
-do not cover.
+After each batch, rerun the checks and compare with the baseline. Any
+difference, including a check that now passes, means something read a
+removed comment: narrow the batch down to that comment and restore it.
+
+Done when every approved item is applied or skipped with a reason and every
+batch matches its baseline; report the checks you could not run.
 
 ## 5. Keep it pruned
 
 Offer a comment rule for the repository's `AGENTS.md` or `CLAUDE.md`, built
-from the Keep patterns and stated positively, for example:
+from the Keep patterns, for example:
 
-> Comments state why the code cannot say it: an external quirk with a link, a
-> constraint and what breaks without it, a rejected alternative. Names, types
-> and functions carry everything else. Temporary work lives in the issue
-> tracker.
+> Comments say what the code cannot: an external quirk with a link, a
+> constraint and what breaks without it, a rejected alternative, an API
+> contract that other files or docs read. Comments a tool reads stay in the
+> form it requires. Names, types and functions carry the rest. A TODO cites
+> its ticket.
 
 Add it only when the user agrees.

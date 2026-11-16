@@ -114,11 +114,13 @@ npx skills add kr4chinin/skills --skill prune-comments
 
 > Identify the useless code comments we can prune in my repo.
 
-The first pass is read-only and ends with a plan: workaround and hack comments
-that are best fixed by a refactor, patterns that can be deleted outright, and
-the comments worth keeping. It applies the plan only when asked, deletions
-first and each refactor as its own change, and can add a comment rule to
-`AGENTS.md` so the codebase stays pruned.
+The first pass is read-only and ends with a plan. Each workaround gets one
+row: fix the root cause, delete it because its cause is gone on every
+supported version, or keep it with the cause named. Then come the other
+refactors, deletions by pattern, rewrites and the comments worth keeping,
+including every comment a tool reads. It applies the plan only when asked,
+checking each batch against a baseline run, and offers a comment rule for
+`AGENTS.md` or `CLAUDE.md` so the codebase stays pruned.
 
 ## License
 
