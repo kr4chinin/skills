@@ -127,8 +127,8 @@ Before the first batch, run the checks once as the baseline: formatter in
 check mode, linter, type check, tests, and the tools from step 1 that read
 the comments being removed (build, docs build, coverage, i18n extraction,
 codegen). With uncommitted changes in the tree, run the tools that write
-files (build, codegen, i18n extraction) in a separate worktree, or ask
-first. Confirm each approved item still points at the same comment; a
+files (build, codegen, i18n extraction) in a copy of the tree that includes
+those changes and each applied batch, or ask first. Confirm each approved item still points at the same comment; a
 moved one goes back to unreviewed. Leave files with the user's uncommitted
 changes untouched, and commit only when the user or the project's workflow
 asks for it.
